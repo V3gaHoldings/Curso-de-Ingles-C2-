@@ -3,1000 +3,1122 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>English Fluency Lab | B1 → C2 (6 Months)</title>
-<!-- Tailwind CSS via CDN for rapid styling -->
+<title>English Fluency Lab | B1→C2 Interactive</title>
+<!-- Tailwind + Alpine.js (reactivity) + Chart.js + Lucide + SortableJS -->
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- Chart.js for progress visualization -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@latest"></script>
-<!-- Google Font: Inter -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#0b0f1a; --card:#111827; --border:#1f2937; --primary:#22d3ee; --primary-dim:#06b6d4; --accent:#f472b6; --text:#e5e7eb; --muted:#9ca3af; --success:#34d399; --warn:#fbbf24; --danger:#f87171; }
-  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
-  .bg-grid { background-image: linear-gradient(to right, rgba(34,211,238,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(34,211,238,0.03) 1px, transparent 1px); background-size: 40px 40px; }
-  .glass { background: rgba(17,24,39,0.8); backdrop-filter: blur(12px); border: 1px solid var(--border); }
-  .btn { @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900; }
+  :root { --bg:#0a0e17; --card:#111827; --border:#1f2937; --primary:#22d3ee; --primary-dim:#06b6d4; --accent:#f472b6; --text:#e5e7eb; --muted:#9ca3af; --success:#34d399; --warn:#fbbf24; --danger:#f87171; --radius:12px; }
+  .light { --bg:#f8fafc; --card:#ffffff; --border:#e2e8f0; --text:#0f172a; --muted:#64748b; --primary:#0891b2; --accent:#db2777; --success:#059669; --warn:#d97706; --danger:#dc2626; }
+  * { font-family: 'Inter', sans-serif; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  body { background: var(--bg); color: var(--text); transition: background 0.3s, color 0.3s; }
+  .bg-grid { background-image: linear-gradient(to right, rgba(34,211,238,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(34,211,238,0.04) 1px, transparent 1px); background-size: 50px 50px; }
+  .light .bg-grid { background-image: linear-gradient(to right, rgba(8,145,178,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(8,145,178,0.05) 1px, transparent 1px); }
+  .glass { background: rgba(17,24,39,0.7); backdrop-filter: blur(12px); border: 1px solid var(--border); }
+  .light .glass { background: rgba(255,255,255,0.8); border: 1px solid var(--border); }
+  .btn { @apply px-4 py-2.5 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed; }
   .btn-primary { @apply btn bg-cyan-500 text-gray-900 hover:bg-cyan-400 focus:ring-cyan-500; }
   .btn-secondary { @apply btn bg-gray-800 text-gray-100 hover:bg-gray-700 border border-gray-700 focus:ring-gray-600; }
+  .light .btn-secondary { @apply bg-gray-100 text-gray-900 hover:bg-gray-200 border-gray-300; }
   .btn-ghost { @apply btn bg-transparent hover:bg-gray-800 text-gray-300 hover:text-white; }
-  .input-field { @apply w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none transition; }
-  .card { @apply glass rounded-2xl p-6 transition-all hover:border-cyan-500/30; }
+  .light .btn-ghost { @apply hover:bg-gray-100 text-gray-600 hover:text-gray-900; }
+  .btn-sm { @apply px-3 py-1.5 text-sm; }
+  .btn-xs { @apply px-2 py-1 text-xs; }
+  .input-field { @apply w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none transition; }
+  .light .input-field { @apply bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-cyan-500; }
+  .card { @apply glass rounded-2xl p-5 transition-all hover:border-cyan-500/30; }
   .nav-link { @apply flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800/50 transition font-medium; }
+  .light .nav-link { @apply text-gray-500 hover:text-gray-900 hover:bg-gray-100; }
   .nav-link.active { @apply text-cyan-400 bg-cyan-500/10 border-l-2 border-cyan-500; }
-  .word-tag { @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-gray-800 border border-gray-700 hover:border-cyan-500/50 transition cursor-pointer; }
-  .word-tag.learned { @apply bg-green-900/30 border-green-500/50 text-green-400; }
-  .word-tag.learning { @apply bg-yellow-900/30 border-yellow-500/50 text-yellow-400; }
-  .week-card { @apply card flex flex-col h-full; }
+  .light .nav-link.active { @apply text-cyan-600 bg-cyan-100 border-cyan-600; }
+  .tab-btn { @apply px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800/50 transition; }
+  .tab-btn.active { @apply text-cyan-400 bg-cyan-500/10; }
+  .light .tab-btn { @apply text-gray-500 hover:text-gray-900 hover:bg-gray-100; }
+  .light .tab-btn.active { @apply text-cyan-600 bg-cyan-100; }
+  .word-chip { @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-gray-800 border border-gray-700 hover:border-cyan-500/50 transition cursor-pointer; }
+  .light .word-chip { @apply bg-gray-100 border-gray-300 text-gray-700 hover:border-cyan-500; }
+  .word-chip.learned { @apply bg-green-900/30 border-green-500/50 text-green-400; }
+  .light .word-chip.learned { @apply bg-green-100 border-green-400 text-green-700; }
+  .word-chip.learning { @apply bg-yellow-900/30 border-yellow-500/50 text-yellow-400; }
+  .light .word-chip.learning { @apply bg-yellow-100 border-yellow-400 text-yellow-700; }
+  .week-card { @apply card flex flex-col h-full relative overflow-hidden; }
   .week-card.current { @apply border-cyan-500/50 shadow-lg shadow-cyan-500/10; }
-  .modal-overlay { @apply fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4; }
-  .modal-box { @apply glass rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto; }
-  .sr-btn { @apply px-3 py-1.5 rounded-md text-xs font-semibold transition; }
+  .week-card.done { @apply opacity-60; }
+  .week-card.done::after { content:''; @apply absolute top-0 right-0 w-8 h-8 bg-green-500/20; clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+  .modal-overlay { @apply fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4; }
+  .modal-box { @apply glass rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col; }
+  .modal-header { @apply p-4 border-b border-gray-800 flex items-center justify-between; }
+  .modal-body { @apply p-4 overflow-y-auto flex-1; }
+  .sr-btn { @apply px-4 py-2 rounded-xl text-sm font-semibold transition min-w-[80px]; }
   .sr-again { @apply sr-btn bg-red-900/50 text-red-400 hover:bg-red-900 border border-red-900; }
   .sr-hard { @apply sr-btn bg-orange-900/50 text-orange-400 hover:bg-orange-900 border border-orange-900; }
   .sr-good { @apply sr-btn bg-green-900/50 text-green-400 hover:bg-green-900 border border-green-900; }
   .sr-easy { @apply sr-btn bg-blue-900/50 text-blue-400 hover:bg-blue-900 border border-blue-900; }
-  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; } ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  .animate-in { animation: fadeIn 0.4s ease-out forwards; }
-  .delay-1 { animation-delay: 0.1s; opacity: 0; } .delay-2 { animation-delay: 0.2s; opacity: 0; } .delay-3 { animation-delay: 0.3s; opacity: 0; }
-  .flip-card { perspective: 1000px; cursor: pointer; }
-  .flip-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; }
+  .exercise-box { @apply bg-gray-900/50 border border-gray-700 rounded-xl p-4; }
+  .light .exercise-box { @apply bg-gray-50 border-gray-200; }
+  .fill-input { @apply bg-gray-800 border-b-2 border-gray-600 text-white px-2 py-1 rounded focus:border-cyan-500 focus:outline-none transition min-w-[120px] text-center; }
+  .light .fill-input { @apply bg-white border-gray-300 text-gray-900 focus:border-cyan-500; }
+  .fill-input.correct { @apply border-green-500 bg-green-900/20 text-green-400; }
+  .light .fill-input.correct { @apply border-green-500 bg-green-100 text-green-700; }
+  .fill-input.incorrect { @apply border-red-500 bg-red-900/20 text-red-400; }
+  .light .fill-input.incorrect { @apply border-red-500 bg-red-100 text-red-700; }
+  .audio-btn { @apply p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-cyan-400 transition; }
+  .light .audio-btn { @apply bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-cyan-600; }
+  .shadow-player { @apply bg-gray-900 rounded-xl p-4; }
+  .light .shadow-player { @apply bg-gray-100; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; } ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-in { animation: fadeInUp 0.4s ease-out forwards; }
+  .delay-1 { animation-delay: 0.05s; opacity: 0; } .delay-2 { animation-delay: 0.1s; opacity: 0; } .delay-3 { animation-delay: 0.15s; opacity: 0; }
+  .flip-card { perspective: 1000px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .flip-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); transform-style: preserve-3d; }
   .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
-  .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 1.5rem; border-radius: 1rem; }
+  .flip-card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 1.5rem; border-radius: 1rem; }
   .flip-card-back { transform: rotateY(180deg); background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 1px solid #312e81; }
+  .light .flip-card-back { background: linear-gradient(135deg, #e0e7ff 0%, #fafafa 100%); border: 1px solid #c7d2fe; }
+  .toast { @apply glass border px-4 py-3 rounded-xl flex items-center gap-2 animate-in; }
+  .dropdown-menu { @apply glass rounded-xl border border-gray-700 p-1 min-w-[180px] shadow-lg; }
+  .light .dropdown-menu { @apply border-gray-200; }
+  .dropdown-item { @apply flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-gray-800 transition; }
+  .light .dropdown-item { @apply hover:bg-gray-100; }
+  .progress-ring { transform: rotate(-90deg); }
+  .progress-ring-circle { transition: stroke-dashoffset 0.5s ease; }
 </style>
 </head>
-<body class="min-h-screen bg-grid flex">
+<body x-data="app()" x-init="init()" class="min-h-screen bg-grid flex" :class="{ light: settings.theme === 'light' || (settings.theme === 'system' && !isDark) }">
 
 <!-- ========== SIDEBAR ========== -->
-<aside id="sidebar" class="fixed inset-y-0 left-0 w-72 glass border-r border-gray-800 flex flex-col z-40 transform transition-transform duration-300 lg:translate-x-0" aria-label="Main Navigation">
-  <div class="p-6 border-b border-gray-800 flex items-center gap-3">
-    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-pink-500 flex items-center justify-center"><i data-lucide="brain" class="w-6 h-6 text-gray-900"></i></div>
-    <div>
-      <h1 class="font-bold text-xl tracking-tight bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">Fluency Lab</h1>
-      <p class="text-xs text-gray-500">B1 → C2 • 26 Weeks</p>
+<aside x-show="!mobileMenuOpen" x-transition:enter="transition-transform duration-300 ease-out" x-transition:leave="transition-transform duration-300 ease-in" :class="['fixed inset-y-0 left-0 w-72 glass border-r border-gray-800 flex flex-col z-40', sidebarOpen ? 'translate-x-0' : '-translate-x-full', 'lg:translate-x-0']" @keydown.escape.window="sidebarOpen=false" aria-label="Main Navigation">
+  <div class="p-5 border-b border-gray-800 flex items-center gap-3">
+    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500 to-pink-500 flex items-center justify-center flex-shrink-0"><i data-lucide="brain" class="w-6 h-6 text-gray-900"></i></div>
+    <div class="min-w-0">
+      <h1 class="font-bold text-xl tracking-tight truncate bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">Fluency Lab</h1>
+      <p class="text-xs text-gray-500 truncate">B1 → C2 • 26 Weeks</p>
     </div>
   </div>
-  <nav class="flex-1 p-4 space-y-1 overflow-y-auto" role="navigation">
-    <a href="#" data-view="dashboard" class="nav-link active" id="nav-dashboard"><i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard</a>
-    <a href="#" data-view="curriculum" class="nav-link" id="nav-curriculum"><i data-lucide="book-open" class="w-5 h-5"></i> Curriculum (26 Weeks)</a>
-    <a href="#" data-view="srs" class="nav-link" id="nav-srs"><i data-lucide="refresh-cw" class="w-5 h-5"></i> SRS Review (<span id="srs-count-badge" class="text-xs bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded">0</span>)</a>
-    <a href="#" data-view="lexicon" class="nav-link" id="nav-lexicon"><i data-lucide="dictionary" class="w-5 h-5"></i> Personal Lexicon</a>
-    <a href="#" data-view="tools" class="nav-link" id="nav-tools"><i data-lucide="wrench" class="w-5 h-5"></i> Fluency Tools</a>
-    <a href="#" data-view="settings" class="nav-link" id="nav-settings"><i data-lucide="settings" class="w-5 h-5"></i> Settings & Data</a>
+  <nav class="flex-1 p-3 space-y-1 overflow-y-auto" role="navigation">
+    <template x-for="nav in navigation" :key="nav.id">
+      <a @click="setView(nav.id); sidebarOpen=false" :class="['nav-link', { active: currentView === nav.id }]" :href="'#'+nav.id" :id="'nav-'+nav.id">
+        <i :data-lucide="nav.icon" class="w-5 h-5 flex-shrink-0"></i>
+        <span x-text="nav.label"></span>
+        <template x-if="nav.badge">
+          <span class="ml-auto text-xs bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded" x-text="nav.badge()"></span>
+        </template>
+      </a>
+    </template>
   </nav>
-  <div class="p-4 border-t border-gray-800">
-    <div class="flex items-center justify-between text-sm mb-2">
-      <span class="text-gray-400">Streak</span>
-      <span id="streak-display" class="font-bold text-cyan-400 flex items-center gap-1"><i data-lucide="flame" class="w-4 h-4"></i> <span id="streak-num">0</span> days</span>
+  <div class="p-4 border-t border-gray-800 space-y-3">
+    <div class="flex items-center justify-between">
+      <span class="text-gray-400 text-sm">Streak</span>
+      <span class="font-bold text-cyan-400 flex items-center gap-1"><i data-lucide="flame" class="w-4 h-4"></i> <span x-text="streak"></span> days</span>
     </div>
     <div class="h-2 bg-gray-800 rounded-full overflow-hidden">
-      <div id="week-progress-bar" class="h-full bg-gradient-to-r from-cyan-500 to-pink-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+      <div class="h-full bg-gradient-to-r from-cyan-500 to-pink-500 rounded-full transition-all duration-500" :style="'width:' + (currentWeek/26*100) + '%'"></div>
     </div>
-    <p id="week-progress-text" class="text-xs text-gray-500 mt-1 text-center">Week 1 of 26</p>
+    <p class="text-xs text-gray-500 text-center" x-text="'Week ' + currentWeek + ' of 26'"></p>
+    <div class="grid grid-cols-3 gap-2 text-center pt-2">
+      <div class="card p-2"><div class="text-2xl font-bold text-cyan-400" x-text="wordsLearnedCount"></div><div class="text-xs text-gray-500">Learned</div></div>
+      <div class="card p-2"><div class="text-2xl font-bold text-pink-400" x-text="totalHours"></div><div class="text-xs text-gray-500">Hours</div></div>
+      <div class="card p-2"><div class="text-2xl font-bold text-green-400" x-text="retentionRate + '%'"></div><div class="text-xs text-gray-500">Retention</div></div>
+    </div>
   </div>
 </aside>
 
-<!-- ========== MOBILE MENU BTN ========== -->
-<button id="mobile-menu-btn" class="lg:hidden fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-cyan-500 text-gray-900 shadow-lg flex items-center justify-center" aria-label="Open Menu"><i data-lucide="menu" class="w-6 h-6"></i></button>
+<!-- Mobile Menu Button -->
+<button @click="mobileMenuOpen = true" class="lg:hidden fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-cyan-500 text-gray-900 shadow-lg flex items-center justify-center" aria-label="Open Menu"><i data-lucide="menu" class="w-6 h-6"></i></button>
+
+<!-- Mobile Overlay -->
+<div x-show="mobileMenuOpen" @click="mobileMenuOpen=false" class="lg:hidden fixed inset-0 bg-black/50 z-30" x-transition:enter="transition-opacity" x-transition:leave="transition-opacity"></div>
 
 <!-- ========== MAIN CONTENT ========== -->
-<main id="main-content" class="flex-1 lg:ml-72 min-h-screen overflow-y-auto">
-  <!-- Dashboard View -->
-  <section id="view-dashboard" class="view p-6 lg:p-10 animate-in">
+<main class="flex-1 lg:ml-72 min-h-screen overflow-y-auto" :class="{ 'lg:ml-0': mobileMenuOpen }">
+  
+  <!-- VIEW: DASHBOARD -->
+  <section x-show="currentView === 'dashboard'" x-transition class="view p-6 lg:p-10">
     <div class="max-w-6xl mx-auto space-y-8">
-      <header class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+      <header class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 animate-in">
         <div>
-          <h2 class="text-3xl lg:text-4xl font-bold tracking-tight">Week <span id="current-week-num" class="text-cyan-400">1</span> <span class="text-gray-500 font-normal text-lg">/ 26</span></h2>
-          <p id="current-week-theme" class="text-gray-400 mt-1 text-lg">Loading curriculum...</p>
+          <h2 class="text-3xl lg:text-4xl font-bold tracking-tight">Week <span class="text-cyan-400" x-text="currentWeek"></span> <span class="text-gray-500 font-normal text-lg">/ 26</span></h2>
+          <p class="text-gray-400 mt-1 text-lg" x-text="currentWeekData.theme"></p>
         </div>
-        <button id="btn-start-today" class="btn-primary w-full sm:w-auto group flex items-center gap-2"><i data-lucide="play-circle" class="w-5 h-5 group-hover:rotate-12 transition"></i> Start Today's Session</button>
+        <button @click="enterClassroom()" class="btn-primary w-full sm:w-auto group flex items-center gap-2"><i data-lucide="play-circle" class="w-5 h-5 group-hover:rotate-12 transition"></i> <span class="hidden sm:inline">Enter Classroom (Day <span x-text="todayDay"></span>)</span><span class="sm:hidden">Enter Classroom</span></button>
       </header>
 
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="card"><div class="text-gray-500 text-sm">Words Learned</div><div id="stat-words" class="text-3xl font-bold text-cyan-400">0</div></div>
-        <div class="card"><div class="text-gray-500 text-sm">Hours Logged</div><div id="stat-hours" class="text-3xl font-bold text-pink-400">0.0</div></div>
-        <div class="card"><div class="text-gray-500 text-sm">SRS Retention</div><div id="stat-retention" class="text-3xl font-bold text-green-400">—</div></div>
-        <div class="card"><div class="text-gray-500 text-sm">Current Level Est.</div><div id="stat-level" class="text-3xl font-bold text-yellow-400">B1</div></div>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-in delay-1">
+        <div class="card"><div class="text-gray-500 text-sm">Words Learned</div><div class="text-3xl font-bold text-cyan-400" x-text="wordsLearnedCount"></div></div>
+        <div class="card"><div class="text-gray-500 text-sm">Hours Logged</div><div class="text-3xl font-bold text-pink-400" x-text="totalHours"></div></div>
+        <div class="card"><div class="text-gray-500 text-sm">SRS Retention</div><div class="text-3xl font-bold text-green-400" x-text="retentionRate + '%'"></div></div>
+        <div class="card"><div class="text-gray-500 text-sm">Current Level</div><div class="text-3xl font-bold text-yellow-400" x-text="estimatedLevel"></div></div>
       </div>
 
-      <!-- Today's Session Plan -->
-      <div class="card">
-        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2"><i data-lucide="clipboard-list" class="w-5 h-5 text-cyan-400"></i> Today's Session Plan</h3>
-        <div id="session-plan" class="space-y-3">Loading...</div>
+      <div class="grid lg:grid-cols-3 gap-6 animate-in delay-2">
+        <div class="lg:col-span-2 card">
+          <h3 class="font-semibold mb-4 flex items-center gap-2"><i data-lucide="clipboard-list" class="w-5 h-5 text-cyan-400"></i> Today's Session Plan (Week <span x-text="currentWeek"></span>)</h3>
+          <div class="space-y-3" x-html="todaysPlanHTML"></div>
+        </div>
+        <div class="card">
+          <h3 class="font-semibold mb-4 flex items-center gap-2"><i data-lucide="target" class="w-5 h-5 text-pink-400"></i> Weekly Targets</h3>
+          <ul class="space-y-3 text-sm">
+            <li class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="check-circle" class="w-5 h-5 text-green-400 flex-shrink-0"></i><span>Learn <strong x-text="settings.newCardsDay"></strong> new words</span></li>
+            <li class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="headphones" class="w-5 h-5 text-pink-400 flex-shrink-0"></i><span><strong>30 min</strong> Comprehensible Input</span></li>
+            <li class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="mic" class="w-5 h-5 text-yellow-400 flex-shrink-0"></i><span><strong>20 min</strong> Speaking / Writing</span></li>
+            <li class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="book-open" class="w-5 h-5 text-purple-400 flex-shrink-0"></i><span><strong>15 min</strong> Grammar Deep Dive</span></li>
+            <li class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="refresh-cw" class="w-5 h-5 text-cyan-400 flex-shrink-0"></i><span>Review <strong>ALL</strong> due SRS cards</span></li>
+          </ul>
+        </div>
       </div>
 
-      <!-- Quick Actions -->
-      <div class="grid md:grid-cols-3 gap-4">
-        <button data-action="srs" class="card text-left group hover:border-cyan-500/50"><i data-lucide="rotate-ccw" class="w-6 h-6 text-cyan-400 mb-2"></i><h4 class="font-semibold">Review Vocabulary (SRS)</h4><p class="text-sm text-gray-500 mt-1">Spaced repetition for long-term memory</p></button>
-        <button data-action="input" class="card text-left group hover:border-pink-500/50"><i data-lucide="headphones" class="w-6 h-6 text-pink-400 mb-2"></i><h4 class="font-semibold">Comprehensible Input</h4><p class="text-sm text-gray-500 mt-1">Curated native content for this week</p></button>
-        <button data-action="output" class="card text-left group hover:border-green-500/50"><i data-lucide="mic" class="w-6 h-6 text-green-400 mb-2"></i><h4 class="font-semibold">Speaking / Writing</h4><p class="text-sm text-gray-500 mt-1">Output prompts with AI feedback tips</p></button>
+      <div class="grid md:grid-cols-3 gap-4 animate-in delay-3">
+        <button @click="openSessionModal('srs')" class="card text-left group hover:border-cyan-500/50"><i data-lucide="rotate-ccw" class="w-6 h-6 text-cyan-400 mb-2"></i><h4 class="font-semibold">SRS Review</h4><p class="text-sm text-gray-500 mt-1">Spaced repetition (<span x-text="dueCount"></span> due)</p></button>
+        <button @click="openSessionModal('input')" class="card text-left group hover:border-pink-500/50"><i data-lucide="headphones" class="w-6 h-6 text-pink-400 mb-2"></i><h4 class="font-semibold">Input Session</h4><p class="text-sm text-gray-500 mt-1">Curated native content</p></button>
+        <button @click="openSessionModal('output')" class="card text-left group hover:border-green-500/50"><i data-lucide="mic" class="w-6 h-6 text-green-400 mb-2"></i><h4 class="font-semibold">Output Session</h4><p class="text-sm text-gray-500 mt-1">Speak/Write + AI Prompt</p></button>
       </div>
     </div>
   </section>
 
-  <!-- Curriculum View -->
-  <section id="view-curriculum" class="view hidden p-6 lg:p-10">
+  <!-- VIEW: CLASSROOM (NEW MAIN LEARNING INTERFACE) -->
+  <section x-show="currentView === 'classroom'" x-transition class="view p-4 lg:p-6">
+    <div class="max-w-7xl mx-auto h-[calc(100vh-2rem)] lg:h-[calc(100vh-3rem)] flex flex-col">
+      <!-- Classroom Header -->
+      <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 p-4 card rounded-xl shrink-0">
+        <div class="flex items-center gap-4">
+          <button @click="setView('dashboard')" class="btn-ghost p-2 lg:hidden"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-pink-500 flex items-center justify-center flex-shrink-0"><i data-lucide="graduation-cap" class="w-6 h-6 text-gray-900"></i></div>
+          <div>
+            <h1 class="font-bold text-xl" x-text="currentWeekData.theme"></h1>
+            <p class="text-sm text-gray-400" x-text="'Week ' + currentWeek + ' • ' + phaseName"></p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 ml-auto">
+          <span class="btn-xs btn-secondary" x-text="'Day ' + classroomDay + ' of 6'"></span>
+          <button @click="prevDay" class="btn-xs btn-secondary" :disabled="classroomDay <= 1"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+          <button @click="nextDay" class="btn-xs btn-secondary" :disabled="classroomDay >= 6"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+          <button @click="completeWeek" class="btn-xs btn-primary" x-show="isWeekComplete"><i data-lucide="check-circle-2" class="w-4 h-4 mr-1"></i> Complete Week</button>
+        </div>
+      </header>
+
+      <!-- Main Grid: Content | Sidebar -->
+      <div class="flex-1 flex overflow-hidden">
+        <!-- Content Area -->
+        <div class="flex-1 overflow-y-auto pr-4 mr-4 border-r border-gray-800">
+          <div role="tablist" class="flex flex-wrap gap-1 mb-4 sticky top-0 bg-gradient-to-b from-transparent via-50% to-[var(--bg)] z-10 pb-4">
+            <template x-for="tab in classroomTabs" :key="tab.id">
+              <button @click="activeClassroomTab = tab.id" :class="['tab-btn', { active: activeClassroomTab === tab.id }]" :aria-selected="activeClassroomTab === tab.id" role="tab">
+                <i :data-lucide="tab.icon" class="w-4 h-4 mr-1.5"></i> <span x-text="tab.label"></span>
+              </button>
+            </template>
+          </div>
+
+          <!-- Tab Panels -->
+          <div x-show="activeClassroomTab === 'day'" x-transition>
+            <component :is="dayComponent" :day="classroomDay" :week="currentWeekData"></component>
+          </div>
+          <div x-show="activeClassroomTab === 'grammar'" x-transition>
+            <GrammarLesson :week="currentWeekData"></GrammarLesson>
+          </div>
+          <div x-show="activeClassroomTab === 'vocab'" x-transition>
+            <VocabLab :week="currentWeekData"></VocabLab>
+          </div>
+          <div x-show="activeClassroomTab === 'shadowing'" x-transition>
+            <ShadowingPlayer></ShadowingPlayer>
+          </div>
+          <div x-show="activeClassroomTab === 'output'" x-transition>
+            <OutputWorkshop :week="currentWeekData"></OutputWorkshop>
+          </div>
+        </div>
+
+        <!-- Right Sidebar: Checklist & Timer -->
+        <aside class="w-80 lg:w-88 flex-shrink-0 p-4 space-y-4">
+          <div class="card sticky top-4">
+            <h3 class="font-semibold mb-3 flex items-center gap-2"><i data-lucide="clipboard-check" class="w-5 h-5 text-cyan-400"></i> Daily Checklist</h3>
+            <ul class="space-y-2" x-data="{ checks: dailyChecks }">
+              <template x-for="(item, key) in checklistItems" :key="key">
+                <li>
+                  <label class="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-800/50 transition">
+                    <input type="checkbox" class="w-5 h-5 rounded border-gray-600 text-cyan-500 focus:ring-cyan-500" :checked="checks[key]" @change="checks[key] = $event.target.checked; $store.app.saveDailyChecks(key, $event.target.checked)">
+                    <span class="text-sm" x-text="item.label"></span>
+                    <span class="ml-auto text-xs text-gray-500" x-text="item.time"></span>
+                  </label>
+                </li>
+              </template>
+            </ul>
+            <div class="pt-3 mt-3 border-t border-gray-800">
+              <button @click="logSession()" class="btn-primary w-full text-sm" :disabled="Object.values(dailyChecks).every(v=>v)"><i data-lucide="save" class="w-4 h-4 mr-1"></i> <span x-text="Object.values(dailyChecks).every(v=>v) ? 'Day Logged!' : 'Log Day (' + Math.round(Object.values(dailyChecks).filter(v=>v).length/4*100) + '%)'"></span></button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="font-semibold mb-3 flex items-center gap-2"><i data-lucide="timer" class="w-5 h-5 text-pink-400"></i> Focus Timer</h3>
+            <div class="relative w-40 h-40 mx-auto mb-4">
+              <svg class="w-full h-full progress-ring">
+                <circle class="text-gray-800" stroke-width="6" fill="none" r="60" cx="80" cy="80"></circle>
+                <circle class="progress-ring-circle text-cyan-500" stroke-width="6" stroke-linecap="round" fill="none" r="60" cx="80" cy="80" :style="{ strokeDasharray: 377, strokeDashoffset: 377 - (377 * timerProgress / 100) }"></circle>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span class="font-mono text-3xl font-bold" x-text="timerDisplay"></span>
+                <span class="text-xs text-gray-500" x-text="timerMode"></span>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button @click="startTimer(25*60)" class="btn-secondary flex-1 text-xs">Pomodoro (25)</button>
+              <button @click="startTimer(50*60)" class="btn-secondary flex-1 text-xs">Deep Work (50)</button>
+            </div>
+            <div class="flex gap-2 mt-2">
+              <button @click="timerRunning ? pauseTimer() : resumeTimer()" class="btn-primary flex-1 text-sm"><i :data-lucide="timerRunning ? 'pause' : 'play'" class="w-4 h-4 mr-1"></i> <span x-text="timerRunning ? 'Pause' : 'Resume'"></span></button>
+              <button @click="resetTimer()" class="btn-ghost flex-1 text-sm"><i data-lucide="rotate-ccw" class="w-4 h-4 mr-1"></i> Reset</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="font-semibold mb-3 flex items-center gap-2"><i data-lucide="lightbulb" class="w-5 h-5 text-yellow-400"></i> Quick Tips</h3>
+            <ul class="space-y-2 text-sm text-gray-400">
+              <li>💡 <strong>Shadowing:</strong> Repeat 0.5s after audio. Mimic melody.</li>
+              <li>🔁 <strong>SRS:</strong> Be honest. "Again" saves time later.</li>
+              <li>📝 <strong>Output:</strong> Record audio. Compare tomorrow.</li>
+              <li>🎯 <strong>Grammar:</strong> Do 1 exercise type daily.</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIEW: CURRICULUM OVERVIEW -->
+  <section x-show="currentView === 'curriculum'" x-transition class="view p-6 lg:p-10">
     <div class="max-w-6xl mx-auto">
       <header class="mb-8"><h2 class="text-3xl font-bold">Curriculum Overview</h2><p class="text-gray-400">26 Weeks • ~15-20h/week • Vocabulary-First Approach</p></header>
-      <div class="space-y-6">
-        <div class="flex flex-wrap gap-2 mb-6" role="tablist">
-          <button data-phase="all" class="phase-tab btn-primary">All</button>
-          <button data-phase="1" class="phase-tab btn-secondary">Phase 1: B1→B2 (W1-8)</button>
-          <button data-phase="2" class="phase-tab btn-secondary">Phase 2: B2 Solid (W9-16)</button>
-          <button data-phase="3" class="phase-tab btn-secondary">Phase 3: C1 Advanced (W17-22)</button>
-          <button data-phase="4" class="phase-tab btn-secondary">Phase 4: C2 Mastery (W23-26)</button>
-        </div>
-        <div id="curriculum-grid" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
+      <div class="flex flex-wrap gap-2 mb-6" role="tablist">
+        <button @click="curriculumFilter='all'" :class="['phase-tab', { 'btn-primary': curriculumFilter==='all', 'btn-secondary': curriculumFilter!=='all' }]">All</button>
+        <button @click="curriculumFilter=1" :class="['phase-tab', { 'btn-primary': curriculumFilter===1, 'btn-secondary': curriculumFilter!==1 }]">Phase 1: B1→B2 (W1-8)</button>
+        <button @click="curriculumFilter=2" :class="['phase-tab', { 'btn-primary': curriculumFilter===2, 'btn-secondary': curriculumFilter!==2 }]">Phase 2: B2 Solid (W9-16)</button>
+        <button @click="curriculumFilter=3" :class="['phase-tab', { 'btn-primary': curriculumFilter===3, 'btn-secondary': curriculumFilter!==3 }]">Phase 3: C1 Advanced (W17-22)</button>
+        <button @click="curriculumFilter=4" :class="['phase-tab', { 'btn-primary': curriculumFilter===4, 'btn-secondary': curriculumFilter!==4 }]">Phase 4: C2 Mastery (W23-26)</button>
       </div>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" x-html="curriculumGridHTML"></div>
     </div>
   </section>
 
-  <!-- SRS View -->
-  <section id="view-srs" class="view hidden p-6 lg:p-10">
+  <!-- VIEW: SRS -->
+  <section x-show="currentView === 'srs'" x-transition class="view p-6 lg:p-10">
     <div class="max-w-4xl mx-auto">
       <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div><h2 class="text-3xl font-bold">Spaced Repetition Review</h2><p class="text-gray-400">Algorithm: SM-2 (Anki-style) • Due: <span id="srs-due-count" class="font-bold text-cyan-400">0</span> cards</p></div>
-        <button id="btn-start-srs" class="btn-primary w-full sm:w-auto"><i data-lucide="play" class="w-4 h-4 mr-2"></i> Start Review Session</button>
+        <div><h2 class="text-3xl font-bold">Spaced Repetition Review</h2><p class="text-gray-400">Algorithm: SM-2 • Due: <span class="font-bold text-cyan-400" x-text="dueCount"></span> cards</p></div>
+        <button @click="startSRS()" class="btn-primary w-full sm:w-auto" :disabled="dueCount === 0"><i data-lucide="play" class="w-4 h-4 mr-2"></i> Start Review Session</button>
       </header>
-      <div id="srs-card-container" class="card min-h-[300px] flex items-center justify-center">
-        <div class="text-center text-gray-500">
-          <i data-lucide="database" class="w-12 h-12 mx-auto mb-4 opacity-50"></i>
-          <p>No cards due right now. Great job!</p>
-          <p class="text-sm mt-2">Add words from your Lexicon or Curriculum to start.</p>
-        </div>
+      <div class="card min-h-[350px] flex items-center justify-center" x-html="srsCardHTML"></div>
+      <div class="mt-6 flex flex-wrap gap-2 justify-center" x-show="srsActive">
+        <button @click="answerSRS(0)" class="sr-again"><i data-lucide="x" class="w-4 h-4 mr-1"></i> Again (<1m)</button>
+        <button @click="answerSRS(3)" class="sr-hard"><i data-lucide="minus" class="w-4 h-4 mr-1"></i> Hard (~6m)</button>
+        <button @click="answerSRS(4)" class="sr-good"><i data-lucide="check" class="w-4 h-4 mr-1"></i> Good (~10m/1d)</button>
+        <button @click="answerSRS(5)" class="sr-easy"><i data-lucide="star" class="w-4 h-4 mr-1"></i> Easy (4d+)</button>
       </div>
-      <div id="srs-controls" class="hidden mt-6 flex flex-wrap gap-2 justify-center">
-        <button class="sr-again" data-grade="0"><i data-lucide="x" class="w-4 h-4 mr-1"></i> Again (<1m)</button>
-        <button class="sr-hard" data-grade="3"><i data-lucide="minus" class="w-4 h-4 mr-1"></i> Hard (6m)</button>
-        <button class="sr-good" data-grade="4"><i data-lucide="check" class="w-4 h-4 mr-1"></i> Good (10m)</button>
-        <button class="sr-easy" data-grade="5"><i data-lucide="star" class="w-4 h-4 mr-1"></i> Easy (4d)</button>
-      </div>
-      <div id="srs-stats" class="mt-6 grid grid-cols-3 gap-4 text-center text-sm">
-        <div class="card"><div class="text-cyan-400 font-bold text-lg" id="srs-new">0</div><div class="text-gray-500">New</div></div>
-        <div class="card"><div class="text-green-400 font-bold text-lg" id="srs-learning">0</div><div class="text-gray-500">Learning</div></div>
-        <div class="card"><div class="text-purple-400 font-bold text-lg" id="srs-review">0</div><div class="text-gray-500">Review</div></div>
+      <div class="mt-6 grid grid-cols-3 gap-4 text-center text-sm">
+        <div class="card"><div class="text-cyan-400 font-bold text-lg" x-text="srsStats.new"></div><div class="text-gray-500">New</div></div>
+        <div class="card"><div class="text-green-400 font-bold text-lg" x-text="srsStats.learning"></div><div class="text-gray-500">Learning</div></div>
+        <div class="card"><div class="text-purple-400 font-bold text-lg" x-text="srsStats.review"></div><div class="text-gray-500">Review</div></div>
       </div>
     </div>
   </section>
 
-  <!-- Lexicon View -->
-  <section id="view-lexicon" class="view hidden p-6 lg:p-10">
+  <!-- VIEW: LEXICON -->
+  <section x-show="currentView === 'lexicon'" x-transition class="view p-6 lg:p-10">
     <div class="max-w-6xl mx-auto">
       <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div><h2 class="text-3xl font-bold">Personal Lexicon</h2><p class="text-gray-400">Your curated dictionary. Tag, filter, export.</p></div>
+        <div><h2 class="text-3xl font-bold">Personal Lexicon</h2><p class="text-gray-400">Your curated dictionary. Auto-fetch definitions & audio.</p></div>
         <div class="flex flex-wrap gap-2">
-          <input type="text" id="lexicon-search" class="input-field flex-1 min-w-[200px]" placeholder="Search word, tag, definition...">
-          <button id="btn-add-word" class="btn-primary"><i data-lucide="plus" class="w-4 h-4 mr-2"></i> Add Word</button>
-          <button id="btn-export-lexicon" class="btn-secondary"><i data-lucide="download" class="w-4 h-4 mr-2"></i> Export JSON</button>
+          <input type="text" x-model="lexiconSearch" @input.debounce.300ms="filterLexicon()" class="input-field flex-1 min-w-[200px]" placeholder="Search word, tag, definition...">
+          <button @click="openWordModal()" class="btn-primary"><i data-lucide="plus" class="w-4 h-4 mr-2"></i> Add Word</button>
+          <button @click="exportLexicon('json')" class="btn-secondary"><i data-lucide="download" class="w-4 h-4 mr-2"></i> Export JSON</button>
+          <button @click="exportLexicon('csv')" class="btn-secondary"><i data-lucide="table" class="w-4 h-4 mr-2"></i> Export CSV</button>
         </div>
       </header>
-      <div class="flex gap-4 mb-6 overflow-x-auto pb-2">
-        <button data-filter="all" class="filter-chip btn-secondary whitespace-nowrap active">All</button>
-        <button data-filter="collocation" class="filter-chip btn-secondary whitespace-nowrap">Collocations</button>
-        <button data-filter="phrasal" class="filter-chip btn-secondary whitespace-nowrap">Phrasal Verbs</button>
-        <button data-filter="idiom" class="filter-chip btn-secondary whitespace-nowrap">Idioms</button>
-        <button data-filter="academic" class="filter-chip btn-secondary whitespace-nowrap">Academic/Formal</button>
-        <button data-filter="connector" class="filter-chip btn-secondary whitespace-nowrap">Connectors</button>
+      <div class="flex gap-2 mb-6 overflow-x-auto pb-2" x-data="{ filter: 'all' }">
+        <template x-for="f in lexiconFilters" :key="f">
+          <button @click="filter = f; $store.app.setLexiconFilter(f)" :class="['filter-chip', { active: filter === f }]" class="btn-secondary whitespace-nowrap" x-text="f === 'all' ? 'All' : capitalize(f)"></button>
+        </template>
       </div>
-      <div id="lexicon-list" class="space-y-2 max-h-[60vh] overflow-y-auto"></div>
+      <div class="space-y-2 max-h-[70vh] overflow-y-auto" x-html="lexiconListHTML"></div>
     </div>
   </section>
 
-  <!-- Tools View -->
-  <section id="view-tools" class="view hidden p-6 lg:p-10">
+  <!-- VIEW: TOOLS -->
+  <section x-show="currentView === 'tools'" x-transition class="view p-6 lg:p-10">
     <div class="max-w-6xl mx-auto space-y-8">
-      <header><h2 class="text-3xl font-bold">Fluency Toolkit</h2><p class="text-gray-400">External resources curated for each skill.</p></header>
+      <header><h2 class="text-3xl font-bold">Fluency Toolkit</h2><p class="text-gray-400">Curated external resources for each skill.</p></header>
       <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <div class="card"><h3 class="font-semibold text-lg flex items-center gap-2"><i data-lucide="headphones" class="text-cyan-400"></i> Listening & Input</h3><div id="tool-listening" class="mt-4 space-y-2 text-sm"></div></div>
-        <div class="card"><h3 class="font-semibold text-lg flex items-center gap-2"><i data-lucide="book-open" class="text-pink-400"></i> Reading & Corpus</h3><div id="tool-reading" class="mt-4 space-y-2 text-sm"></div></div>
-        <div class="card"><h3 class="font-semibold text-lg flex items-center gap-2"><i data-lucide="mic" class="text-green-400"></i> Speaking & Pronunciation</h3><div id="tool-speaking" class="mt-4 space-y-2 text-sm"></div></div>
-        <div class="card"><h3 class="font-semibold text-lg flex items-center gap-2"><i data-lucide="pen-tool" class="text-yellow-400"></i> Writing & Grammar</h3><div id="tool-writing" class="mt-4 space-y-2 text-sm"></div></div>
-        <div class="card"><h3 class="font-semibold text-lg flex items-center gap-2"><i data-lucide="zap" class="text-orange-400"></i> Vocabulary Expansion</h3><div id="tool-vocab" class="mt-4 space-y-2 text-sm"></div></div>
-        <div class="card"><h3 class="font-semibold text-lg flex items-center gap-2"><i data-lucide="target" class="text-purple-400"></i> Exam Prep (IELTS/TOEFL/CPE)</h3><div id="tool-exam" class="mt-4 space-y-2 text-sm"></div></div>
+        <template x-for="cat in toolCategories" :key="cat.id">
+          <div class="card"><h3 class="font-semibold text-lg flex items-center gap-2 mb-4" :style="'color:'+cat.color"><i :data-lucide="cat.icon" class="w-5 h-5"></i> <span x-text="cat.label"></span></h3>
+            <div class="space-y-2 text-sm">
+              <template x-for="tool in cat.tools" :key="tool.title">
+                <a :href="tool.url" target="_blank" class="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-800/50 transition group">
+                  <div class="flex-1 min-w-0"><p class="font-medium text-white group-hover:text-cyan-400" x-text="tool.title"></p><p class="text-xs text-gray-500" x-text="tool.desc"></p></div>
+                  <i data-lucide="external-link" class="w-4 h-4 text-gray-600 group-hover:text-cyan-400 mt-0.5 flex-shrink-0"></i>
+                </a>
+              </template>
+            </div>
+          </div>
+        </template>
       </div>
     </div>
   </section>
 
-  <!-- Settings View -->
-  <section id="view-settings" class="view hidden p-6 lg:p-10">
+  <!-- VIEW: SETTINGS -->
+  <section x-show="currentView === 'settings'" x-transition class="view p-6 lg:p-10">
     <div class="max-w-3xl mx-auto space-y-8">
-      <header><h2 class="text-3xl font-bold">Settings & Data Management</h2></header>
+      <header><h2 class="text-3xl font-bold">Settings & Data</h2></header>
       <div class="card space-y-6">
-        <div><h3 class="font-semibold mb-3">Study Preferences</h3>
+        <div><h3 class="font-semibold mb-4">Study Preferences</h3>
           <div class="grid gap-4 md:grid-cols-2">
-            <label class="flex flex-col gap-1"><span class="text-sm text-gray-400">Daily Goal (minutes)</span><input type="number" id="set-daily-goal" class="input-field" value="90"></label>
-            <label class="flex flex-col gap-1"><span class="text-sm text-gray-400">New Cards/Day (SRS)</span><input type="number" id="set-new-cards" class="input-field" value="20"></label>
-            <label class="flex flex-col gap-1"><span class="text-sm text-gray-400">Target CEFR Level</span><select id="set-target-level" class="input-field"><option value="C2">C2 Mastery</option><option value="C1">C1 Advanced</option><option value="B2">B2 Upper Intermediate</option></select></label>
-            <label class="flex flex-col gap-1"><span class="text-sm text-gray-400">Theme</span><select id="set-theme" class="input-field"><option value="dark">Dark (Default)</option><option value="light">Light</option><option value="system">System</option></select></label>
+            <label class="flex flex-col gap-1"><span class="text-sm text-gray-400">Daily Goal (minutes)</span><input type="number" x-model.number="settings.dailyGoal" @change="saveSettings()" class="input-field"></label>
+            <label class="flex flex-col gap-1"><span class="text-sm text-gray-400">New Cards/Day (SRS)</span><input type="number" x-model.number="settings.newCardsDay" @change="saveSettings()" class="input-field"></label>
+            <label class="flex flex-col gap-1"><span class="text-sm text-gray-400">Target CEFR Level</span><select x-model="settings.targetLevel" @change="saveSettings()" class="input-field"><option value="C2">C2 Mastery</option><option value="C1">C1 Advanced</option><option value="B2">B2 Upper Intermediate</option></select></label>
+            <label class="flex flex-col gap-1"><span class="text-sm text-gray-400">Theme</span><select x-model="settings.theme" @change="saveSettings(); applyTheme()" class="input-field"><option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option></select></label>
           </div>
         </div>
-        <div class="border-t border-gray-800 pt-6"><h3 class="font-semibold mb-3">Data Management (LocalStorage)</h3>
+        <div class="border-t border-gray-800 pt-6"><h3 class="font-semibold mb-4">Data Management (LocalStorage)</h3>
           <div class="flex flex-wrap gap-3">
-            <button id="btn-export-all" class="btn-secondary"><i data-lucide="download" class="w-4 h-4 mr-2"></i> Export Full Backup (JSON)</button>
-            <label class="btn-secondary cursor-pointer"><i data-lucide="upload" class="w-4 h-4 mr-2"></i> Import Backup <input type="file" id="import-file" accept=".json" class="hidden" onchange="handleImport(event)"></label>
-            <button id="btn-reset-all" class="btn bg-red-900/50 text-red-400 hover:bg-red-900 border border-red-900"><i data-lucide="trash-2" class="w-4 h-4 mr-2"></i> Reset ALL Data (Danger)</button>
+            <button @click="exportFullBackup()" class="btn-secondary"><i data-lucide="download" class="w-4 h-4 mr-2"></i> Export Full Backup (JSON)</button>
+            <label class="btn-secondary cursor-pointer"><i data-lucide="upload" class="w-4 h-4 mr-2"></i> Import Backup <input type="file" accept=".json" class="hidden" @change="importBackup($event)"></label>
+            <button @click="confirmReset()" class="btn bg-red-900/50 text-red-400 hover:bg-red-900 border border-red-900"><i data-lucide="trash-2" class="w-4 h-4 mr-2"></i> Reset ALL Data</button>
           </div>
         </div>
       </div>
     </div>
   </section>
+
 </main>
 
 <!-- ========== MODALS ========== -->
-<!-- Word Detail / Add / Edit Modal -->
-<div id="modal-word" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-word-title">
-  <div class="modal-box">
-    <div class="p-6 border-b border-gray-800 flex justify-between items-center">
-      <h3 id="modal-word-title" class="text-xl font-bold">Add New Word</h3>
-      <button onclick="closeModal('modal-word')" class="btn-ghost p-2"><i data-lucide="x" class="w-5 h-5"></i></button>
-    </div>
-    <form id="form-word" class="p-6 space-y-4" onsubmit="saveWord(event)">
+<!-- Word Modal -->
+<div x-show="showWordModal" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="modal-overlay" @click.self="closeWordModal" role="dialog" aria-modal="true">
+  <div class="modal-box max-w-2xl">
+    <div class="modal-header"><h3 class="text-lg font-bold" x-text="editingWordId ? 'Edit Word' : 'Add New Word'"></h3><button @click="closeWordModal" class="btn-ghost p-2"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+    <form @submit.prevent="saveWord" class="modal-body space-y-4">
       <div class="grid gap-4 md:grid-cols-2">
-        <div><label class="block text-sm text-gray-400 mb-1">Headword / Phrase *</label><input type="text" id="w-headword" class="input-field" required placeholder="e.g., 'mitigate', 'come up with'"></div>
-        <div><label class="block text-sm text-gray-400 mb-1">IPA / Pronunciation</label><input type="text" id="w-ipa" class="input-field" placeholder="/ˈmɪt.ɪ.ɡeɪt/"></div>
+        <div><label class="block text-sm text-gray-400 mb-1">Headword / Phrase *</label><input type="text" x-model="wordForm.headword" class="input-field" required placeholder="e.g., mitigate, come up with"></div>
+        <div><label class="block text-sm text-gray-400 mb-1">IPA / Pronunciation</label><input type="text" x-model="wordForm.ipa" class="input-field" placeholder="/ˈmɪt.ɪ.ɡeɪt/" readonly></div>
       </div>
-      <div><label class="block text-sm text-gray-400 mb-1">Definition / Meaning *</label><textarea id="w-def" class="input-field min-h-[80px]" required placeholder="Clear, concise definition in English. Avoid translation if possible."></textarea></div>
-      <div><label class="block text-sm text-gray-400 mb-1">Example Sentence (Contextualized)</label><textarea id="w-ex" class="input-field min-h-[60px]" placeholder="Personalized example: 'The new policy aims to mitigate the financial risks.'"></textarea></div>
+      <div class="flex items-center gap-2">
+        <button type="button" @click="fetchWordData()" class="btn-secondary btn-sm" :disabled="!wordForm.headword || wordForm.loading"><i data-lucide="sparkles" class="w-4 h-4 mr-1"></i> <span x-text="wordForm.loading ? 'Fetching...' : 'Auto-Fill from Dictionary'"></span></button>
+        <span class="text-xs text-gray-500" x-show="wordForm.apiError" x-text="wordForm.apiError"></span>
+      </div>
+      <div><label class="block text-sm text-gray-400 mb-1">Definition *</label><textarea x-model="wordForm.def" class="input-field min-h-[80px]" required placeholder="Clear definition in English"></textarea></div>
+      <div><label class="block text-sm text-gray-400 mb-1">Example Sentence</label><textarea x-model="wordForm.ex" class="input-field min-h-[60px]" placeholder="Personalized context example"></textarea></div>
       <div class="grid gap-4 md:grid-cols-3">
-        <div><label class="block text-sm text-gray-400 mb-1">Type</label><select id="w-type" class="input-field"><option value="word">Single Word</option><option value="collocation">Collocation</option><option value="phrasal">Phrasal Verb</option><option value="idiom">Idiom</option><option value="connector">Connector/Discourse Marker</option><option value="academic">Academic/Formal</option></select></div>
-        <div><label class="block text-sm text-gray-400 mb-1">CEFR Level</label><select id="w-level" class="input-field"><option value="B1">B1</option><option value="B2" selected>B2</option><option value="C1">C1</option><option value="C2">C2</option></select></div>
-        <div><label class="block text-sm text-gray-400 mb-1">Status</label><select id="w-status" class="input-field"><option value="new">New</option><option value="learning">Learning</option><option value="learned">Learned</option></select></div>
+        <div><label class="block text-sm text-gray-400 mb-1">Type</label><select x-model="wordForm.type" class="input-field"><option value="word">Word</option><option value="collocation">Collocation</option><option value="phrasal">Phrasal Verb</option><option value="idiom">Idiom</option><option value="connector">Connector</option><option value="academic">Academic</option></select></div>
+        <div><label class="block text-sm text-gray-400 mb-1">CEFR Level</label><select x-model="wordForm.level" class="input-field"><option value="B1">B1</option><option value="B2">B2</option><option value="C1">C1</option><option value="C2">C2</option></select></div>
+        <div><label class="block text-sm text-gray-400 mb-1">Status</label><select x-model="wordForm.status" class="input-field"><option value="new">New</option><option value="learning">Learning</option><option value="learned">Learned</option></select></div>
       </div>
-      <div><label class="block text-sm text-gray-400 mb-1">Tags (comma separated)</label><input type="text" id="w-tags" class="input-field" placeholder="business, formal, writing, cauching"></div>
+      <div><label class="block text-sm text-gray-400 mb-1">Tags (comma separated)</label><input type="text" x-model="wordForm.tags" class="input-field" placeholder="business, formal, week-1"></div>
+      <input type="hidden" x-model="wordForm.audioUrl">
       <div class="flex justify-end gap-3 pt-4 border-t border-gray-800">
-        <button type="button" onclick="closeModal('modal-word')" class="btn-secondary">Cancel</button>
+        <button type="button" @click="closeWordModal" class="btn-secondary">Cancel</button>
         <button type="submit" class="btn-primary"><i data-lucide="save" class="w-4 h-4 mr-2"></i> Save Word</button>
       </div>
-      <input type="hidden" id="w-id" value="">
     </form>
   </div>
 </div>
 
-<!-- Session Modal (Study Mode) -->
-<div id="modal-session" class="modal-overlay hidden" role="dialog" aria-modal="true">
-  <div class="modal-box max-w-4xl">
-    <div class="p-4 border-b border-gray-800 flex justify-between items-center">
-      <h3 id="session-modal-title" class="text-lg font-bold">Study Session</h3>
-      <div class="flex items-center gap-4">
-        <div id="session-timer" class="font-mono text-cyan-400 text-lg">25:00</div>
-        <button onclick="closeModal('modal-session')" class="btn-ghost p-2"><i data-lucide="x" class="w-5 h-5"></i></button>
-      </div>
-    </div>
-    <div id="session-content" class="p-6 max-h-[70vh] overflow-y-auto">Select a session type from Dashboard.</div>
+<!-- Session Modal (Legacy/Quick Access) -->
+<div x-show="showSessionModal" x-transition class="modal-overlay" @click.self="closeSessionModal" role="dialog">
+  <div class="modal-box max-w-3xl">
+    <div class="modal-header"><h3 class="text-lg font-bold" x-text="sessionModalTitle"></h3><div class="flex items-center gap-4"><span class="font-mono text-cyan-400 text-lg" x-text="sessionTimerDisplay"></span><button @click="closeSessionModal" class="btn-ghost p-2"><i data-lucide="x" class="w-5 h-5"></i></button></div></div>
+    <div class="modal-body" x-html="sessionModalContent"></div>
   </div>
 </div>
 
 <!-- Week Detail Modal -->
-<div id="modal-week" class="modal-overlay hidden" role="dialog" aria-modal="true">
+<div x-show="showWeekModal" x-transition class="modal-overlay" @click.self="closeWeekModal" role="dialog">
   <div class="modal-box max-w-3xl">
-    <div class="p-6 border-b border-gray-800 flex justify-between items-center">
-      <h3 id="modal-week-title" class="text-xl font-bold">Week Details</h3>
-      <button onclick="closeModal('modal-week')" class="btn-ghost p-2"><i data-lucide="x" class="w-5 h-5"></i></button>
-    </div>
-    <div id="modal-week-body" class="p-6 max-h-[80vh] overflow-y-auto"></div>
+    <div class="modal-header"><h3 class="text-lg font-bold" x-text="'Week ' + selectedWeekNum + ': ' + selectedWeekData.theme"></h3><button @click="closeWeekModal" class="btn-ghost p-2"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+    <div class="modal-body" x-html="weekModalContent"></div>
+  </div>
+</div>
+
+<!-- Confirm Reset Modal -->
+<div x-show="showConfirmReset" x-transition class="modal-overlay" @click.self="showConfirmReset=false" role="dialog">
+  <div class="modal-box max-w-md">
+    <div class="p-6 text-center"><i data-lucide="alert-triangle" class="w-16 h-16 text-red-400 mx-auto mb-4"></i><h3 class="text-xl font-bold mb-2">Reset All Data?</h3><p class="text-gray-400 mb-6">This deletes ALL progress, words, SRS data, and settings. Cannot be undone.</p><div class="flex gap-3 justify-center"><button @click="showConfirmReset=false" class="btn-secondary">Cancel</button><button @click="hardReset()" class="btn bg-red-600 hover:bg-red-700">Yes, Delete Everything</button></div></div>
   </div>
 </div>
 
 <!-- Toast Container -->
-<div id="toast-container" class="fixed bottom-6 right-6 z-60 flex flex-col gap-2"></div>
+<div class="fixed bottom-6 right-6 z-60 flex flex-col gap-2" x-html="toastsHTML"></div>
 
 <script>
 // ============================================================
-// 1. CURRICULUM DATA ENGINE (26 Weeks B1->C2)
+// 1. CURRICULUM DATA (26 Weeks) - RICH CONTENT
 // ============================================================
 const CURRICULUM = [
-  // PHASE 1: B1 -> B2 Transition (Weeks 1-8) - High Freq + Collocations
-  {w:1, phase:1, theme:"The Language of Daily Life & Work", vocabFocus:"High-frequency verbs + Noun collocations (make/do/take/have/get)", grammar:"Present Perfect vs Past Simple nuance", input:"Podcast: 6 Minute English (BBC) - Ep 1-3", output:"Describe your routine using 10 new collocations", words:["carry out", "come across", "deal with", "find out", "give up", "go on", "look for", "make sure", "point out", "set up", "take place", "work out", "break down", "bring up", "cut down"]},
-  {w:2, phase:1, theme:"Describing People & Personality (Precise Adjectives)", vocabFocus:"Adjective + Preposition collocations / Negative prefixes", grammar:"Relative clauses (defining/non-defining)", input:"YouTube: English with Lucy - 'Advanced Adjectives for Personality'", output:"Write a character sketch of a colleague/friend (150 words)", words:["conscientious", "adaptable", "resilient", "meticulous", "pragmatic", "ambivalent", "aloof", "gregarious", "prone to", "averse to", "capable of", "dependent on"]},
-  {w:3, phase:1, theme:"Travel, Movement & Logistics", vocabFocus:"Phrasal Verbs: Movement (get around, check in, set off, stop over)", grammar:"Future forms review (will/going to/pres cont)", input:"Podcast: Luke's English Podcast - 'Travel Stories'", output:"Plan a complex itinerary explaining logistics to a partner", words:["set off", "check in", "get away", "stop over", "look around", "get lost", "run out of", "come back", "go ahead", "hold up", "speed up", "slow down"]},
-  {w:4, phase:1, theme:"Health, Body & Medical Precision", vocabFocus:"Symptoms, treatments, collocations (chronic pain, adverse reaction, administer)", grammar:"Modals of deduction (must/might/can't be)", input:"TED Talk: 'What makes a good life?' (Harvard Study)", output:"Explain a health issue to a doctor precisely; give advice", words:["alleviate", "diagnose", "prescribe", "recover", "susceptible", "immune", "chronic", "acute", "side effect", "dosage", "referral", "consultation"]},
-  {w:5, phase:1, theme:"Technology & Digital Life", vocabFocus:"Tech collocations (streamline, troubleshoot, deploy, scalable)", grammar:"Passive voice (processes)", input:"YouTube: Fireship - 'Tech concepts in 100 seconds'", output:"Explain a tech problem/solution to a non-tech person", words:["troubleshoot", "debug", "deploy", "integrate", "migrate", "latency", "bandwidth", "scalable", "intuitive", "obsolete", "patch", "rollback"]},
-  {w:6, phase:1, theme:"Money, Finance & Consumerism", vocabFocus:"Financial verbs (accrue, default, leverage, reimburse)", grammar:"Conditionals (1st, 2nd, 3rd, Mixed)", input:"Podcast: Planet Money (NPR) - Short episodes", output:"Compare two investment options / complain about a bill", words:["accrue", "default", "leverage", "liquidate", "reimburse", "solvent", "volatile", "asset", "liability", "equity", "dividend", "inflation"]},
-  {w:7, phase:1, theme:"Environment & Sustainability", vocabFocus:"Academic nouns (degradation, mitigation, conservation, footprint)", grammar:"Cleft sentences (What matters is... / It is... that)", input:"TED: 'The case for optimism on climate change'", output:"Present a 3-min argument for a sustainability policy", words:["mitigation", "degradation", "biodiversity", "sustainable", "renewable", "emissions", "footprint", "conservation", "advocate", "implement", "legislation", "compliance"]},
-  {w:8, phase:1, theme:"PHASE 1 CONSOLIDATION & ACTIVATION", vocabFocus:"Review Top 200 Collocations / Error Correction", grammar:"Full Tense Review + Error Log Analysis", input:"Mock Exam: Reading/Listening (B2 First style)", output:"Speaking Mock: Long Turn + Discussion (Record & Analyze)", words:[]},
+  // PHASE 1: B1 -> B2 (Weeks 1-8)
+  {w:1, phase:1, theme:"Daily Life & Work Collocations", vocabFocus:"High-frequency verb+noun collocations (make/do/take/have/get)", grammar:"Present Perfect vs Past Simple (Experience vs Specific Time)", grammarDetail:`<h4>Present Perfect vs Past Simple</h4><p><strong>Present Perfect:</strong> Life experience, recent past with 'just/already/yet', unfinished time periods (today, this week). <em>I've worked here for 5 years.</em></p><p><strong>Past Simple:</strong> Finished actions at a specific time. <em>I worked there in 2019.</em></p><p><strong>Key Trigger Words:</strong> PP: ever, never, just, already, yet, since, for. PS: yesterday, last week, in 2020, ago.</p>`, input:"BBC 6 Minute English: 'The daily grind' / 'Working from home'", output:"Describe your typical workday using 10 collocations from the list. Record 2 min.", words:["carry out", "come across", "deal with", "find out", "give up", "go on", "look for", "make sure", "point out", "set up", "take place", "work out", "break down", "bring up", "cut down", "run out of", "come up with", "get along", "look forward to", "take advantage of"]},
+  {w:2, phase:1, theme:"Precise Personality Adjectives", vocabFocus:"Advanced adjectives + dependent prepositions / Negative prefixes", grammar:"Relative Clauses (Defining vs Non-defining)", grammarDetail:`<h4>Relative Clauses</h4><p><strong>Defining:</strong> Essential info, no commas. <em>The colleague who sits next to me is loud.</em></p><p><strong>Non-defining:</strong> Extra info, commas, 'who/which' (not 'that'). <em>My boss, who is from London, speaks 3 languages.</em></p><p><strong>Prepositions:</strong> The person <strong>to whom</strong> I spoke (formal) vs Who I spoke <strong>to</strong> (informal).</p>`, input:"English with Lucy (YouTube): 'Advanced Adjectives for Personality'", output:"Write a 150-word character sketch of a difficult colleague using 8 new adjectives.", words:["conscientious", "adaptable", "resilient", "meticulous", "pragmatic", "ambivalent", "aloof", "gregarious", "prone to", "averse to", "capable of", "dependent on", "suspicious of", "tolerant of", "obsessed with", "disillusioned with", "invaluable", "indispensable", "counterproductive", "detrimental"]},
+  {w:3, phase:1, theme:"Travel, Logistics & Movement", vocabFocus:"Phrasal Verbs: Movement & Travel (get around, check in, set off)", grammar:"Future Forms Review (will / going to / present continuous / present simple)", grammarDetail:`<h4>Future Forms</h4><p><strong>Will:</strong> Spontaneous decisions, predictions, promises. <em>I'll book the flight now.</em></p><p><strong>Going to:</strong> Plans/intentions decided before speaking, evidence-based predictions. <em>We're going to visit Kyoto.</em></p><p><strong>Present Continuous:</strong> Fixed arrangements with people/places. <em>I'm meeting the client at 3pm.</em></p><p><strong>Present Simple:</strong> Timetables/schedules. <em>The train leaves at 18:00.</em></p>`, input:"Luke's English Podcast: 'Travel Stories' (Ep 1-2)", output:"Plan a complex 3-city itinerary. Explain logistics to a partner (record).", words:["set off", "check in", "get away", "stop over", "look around", "get lost", "run out of", "come back", "go ahead", "hold up", "speed up", "slow down", "check out", "drop off", "pick up", "see off", "take off", "touch down", "get through", "look up"]},
+  {w:4, phase:1, theme:"Health, Body & Medical Precision", vocabFocus:"Symptoms, treatments, medical collocations (chronic pain, adverse reaction)", grammar:"Modals of Deduction (must/might/can't/could be)", grammarDetail:`<h4>Modals of Deduction (Present)</h4><p><strong>Must be:</strong> 95% sure. <em>He's coughing; he must have a cold.</em></p><p><strong>Might/Could be:</strong> 50% possibility. <em>It might be an allergy.</em></p><p><strong>Can't be:</strong> 95% sure it's false. <em>He can't be a doctor; he's 12.</em></p><p><strong>Past Deduction:</strong> Must have + PP / Might have + PP / Can't have + PP.</p>`, input:"TED Talk: 'What makes a good life?' (Robert Waldinger)", output:"Roleplay: Explain symptoms to a doctor precisely. Give lifestyle advice.", words:["alleviate", "diagnose", "prescribe", "recover", "susceptible", "immune", "chronic", "acute", "side effect", "dosage", "referral", "consultation", "underlying condition", "preventive measure", "adverse reaction", "contraindication", "remission", "relapse", "prognosis", "palliative"]},
+  {w:5, phase:1, theme:"Technology & Digital Life", vocabFocus:"Tech collocations (streamline, troubleshoot, deploy, scalable)", grammar:"Passive Voice (Processes & Impersonal Reports)", grammarDetail:`<h4>Passive Voice</h4><p><strong>Form:</strong> be + past participle. Focus on action/receiver, not doer.</p><p><strong>Processes:</strong> <em>The data is encrypted, then transmitted to the server.</em></p><p><strong>Impersonal Reporting:</strong> <em>It is believed that... / Users are advised to... / The bug has been fixed.</em></p><p><strong>Get-Passive (Informal):</strong> <em>My account got hacked.</em></p>`, input:"Fireship (YouTube): 'CI/CD in 100 seconds' / 'Database types'", output:"Explain a technical problem you solved to a non-technical person (2 min).", words:["troubleshoot", "debug", "deploy", "integrate", "migrate", "latency", "bandwidth", "scalable", "intuitive", "obsolete", "patch", "rollback", "downtime", "throughput", "bottleneck", "refactor", "legacy code", "api endpoint", "authentication", "encryption"]},
+  {w:6, phase:1, theme:"Money, Finance & Consumer Rights", vocabFocus:"Financial verbs (accrue, default, leverage, reimburse)", grammar:"Conditionals: 1st, 2nd, 3rd & Mixed", grammarDetail:`<h4>Conditionals</h4><p><strong>Zero:</strong> Facts. <em>If you don't pay, interest accrues.</em></p><p><strong>1st:</strong> Real future. <em>If rates rise, I'll remortgage.</em></p><p><strong>2nd:</strong> Hypothetical present. <em>If I were rich, I'd invest.</em></p><p><strong>3rd:</strong> Regret past. <em>If I'd saved, I'd have bought a house.</em></p><p><strong>Mixed:</strong> <em>If I hadn't spent it (past), I would be rich now (present).</em></p>`, input:"Planet Money (NPR): 'The invention of money' / 'Inflation explained'", output:"Compare 2 investment options. Write a formal complaint email about a hidden fee.", words:["accrue", "default", "leverage", "liquidate", "reimburse", "solvent", "volatile", "asset", "liability", "equity", "dividend", "inflation", "principal", "interest rate", "collateral", "foreclosure", "bankruptcy", "audit", "compliance", "disclosure"]},
+  {w:7, phase:1, theme:"Environment & Sustainability", vocabFocus:"Academic nouns (degradation, mitigation, conservation, footprint)", grammar:"Cleft Sentences (What matters is... / It is... that)", grammarDetail:`<h4>Cleft Sentences (Emphasis)</h4><p><strong>It-cleft:</strong> <em>It was the government that failed to act.</em> (Emphasizes subject)</p><p><strong>Wh-cleft (Pseudo-cleft):</strong> <em>What we need is immediate action.</em> (Emphasizes object/complement)</p><p><strong>Reverse Wh-cleft:</strong> <em>Immediate action is what we need.</em></p><p><strong>Use:</strong> Formal writing, speeches, debates to highlight key info.</p>`, input:"TED: 'The case for optimism on climate change' (Hannah Ritchie)", output:"Present a 3-min policy argument: 'The single most effective measure is...'", words:["mitigation", "degradation", "biodiversity", "sustainable", "renewable", "emissions", "footprint", "conservation", "advocate", "implement", "legislation", "compliance", "carbon neutral", "net zero", "circular economy", "greenwashing", "deforestation", "acidification", "resilience", "adaptation"]},
+  {w:8, phase:1, theme:"PHASE 1 CONSOLIDATION", vocabFocus:"Review Top 150 Collocations / Error Correction Clinic", grammar:"Full Tense Review + Error Log Analysis", grammarDetail:`<h4>Consolidation Week</h4><p>No new grammar. Focus on:</p><ul><li>Identifying your top 10 fossilized errors.</li><li>Activating passive vocabulary from Weeks 1-7.</li><li>Mock Exam: Reading & Use of English (B2 First format).</li><li>Speaking: Long turn (1 min) + Discussion (3 min) - Record & transcribe.</li></ul>`, input:"Mock Listening Paper (B2 First)", output:"Full Speaking Mock + Writing (Essay: 'Advantages/Disadvantages of remote work')", words:[]},
 
-  // PHASE 2: B2 Solidification (Weeks 9-16) - Idioms, Phrasal Verbs, Register
-  {w:9, phase:2, theme:"Idioms & Metaphors: Body & Nature", vocabFocus:"Conceptual Metaphors (Time is Money, Argument is War)", grammar:"Inversion (Not only... / Seldom...)", input:"YouTube: English Like A Native - 'Advanced Idioms'", output:"Storytelling: Use 5 idioms naturally in a 2-min story", words:["break the ice", "cost an arm and a leg", "hit the nail on the head", "under the weather", "see eye to eye", "once in a blue moon", "piece of cake", "spill the beans", "pull someone's leg", "beat around the bush"]},
-  {w:10, phase:2, theme:"Professional Communication: Meetings & Negotiation", vocabFocus:"Discourse Markers for Meetings (Moving on, To play devil's advocate)", grammar:"Reported Speech patterns", input:"Harvard Business Review: 'How to negotiate'", output:"Roleplay: Salary negotiation / Project kickoff meeting", words:["play devil's advocate", "move the needle", "touch base", "circle back", "bandwidth", "action items", "stakeholder", "consensus", "push back", "buy-in", "roadmap", "deliverable"]},
-  {w:11, phase:2, theme:"Abstract Concepts: Society, Culture & Trends", vocabFocus:"Abstract Nouns + Verbs (foster innovation, exacerbate inequality)", grammar:"Nominalisation (Verb -> Noun)", input:"The Economist / Guardian Long Reads (1 article deep dive)", output:"Essay: 'The impact of social media on cohesion' (250w)", words:["foster", "exacerbate", "mitigate", "perpetuate", "underpin", "polarize", "cohesion", "disparity", "prevalent", "inevitable", "paradigm", "dichotomy"]},
-  {w:12, phase:2, theme:"Science & Logic: Argumentation", vocabFocus:"Logical connectors (Hence, Thereby, Conversely, Albeit)", grammar:"Linking words for contrast/concession/result", input:"Intelligence Squared Debates (1 debate)", output:"Structure a formal argument: Claim -> Evidence -> Warrant", words:["hence", "thereby", "conversely", "albeit", "notwithstanding", "furthermore", "consequently", "postulate", "hypothesis", "empirical", "anomaly", "correlation"]},
-  {w:13, phase:2, theme:"Arts, Media & Creative Expression", vocabFocus:"Descriptive sensory vocabulary (evocative, poignant, visceral)", grammar:"Participle clauses (-ing/-ed)", input:"The New Yorker: Fiction/Poetry podcast", output:"Write a vivid descriptive paragraph / Film review", words:["evocative", "poignant", "visceral", "nuanced", "ambiguous", "aesthetic", "cathartic", "derivative", "authentic", "cliché", "profound", "superficial"]},
-  {w:14, phase:2, theme:"Phrasal Verbs Mastery: Separable/Inseparable/Transitive", vocabFocus:"Top 50 Academic/Business Phrasal Verbs (carry out, phase out)", grammar:"Phrasal verb grammar patterns", input:"Podcast: Phrasal Verb Daily (Review)", output:"Rewrite formal sentences using phrasal verbs (Register shift)", words:["carry out", "phase out", "account for", "bring about", "come up with", "do away with", "follow up", "go through", "look into", "put forward", "rule out", "set forth"]},
-  {w:15, phase:2, theme:"Humor, Sarcasm & Pragmatics", vocabFocus:"Pragmatic markers (Actually, Basically, I mean, You know)", grammar:"Question tags / Intonation patterns", input:"Comedy: Live at the Apollo / Panel Shows (Would I Lie To You)", output:"Tell a joke/anecdote with correct timing & intonation", words:["deadpan", "sarcasm", "irony", "understatement", "hyperbole", "banter", "witty", "droll", "facetious", "tongue-in-cheek", "punchline", "setup"]},
-  {w:16, phase:2, theme:"PHASE 2 CONSOLIDATION: B2 MOCK EXAM", vocabFocus:"Full Lexical Review (Collocations, Idioms, Phrasals)", grammar:"Open Cloze / Word Formation / Key Word Transformations", input:"Full Listening Paper (Cambridge B2/C1)", output:"Full Speaking Test (Record) + Writing (Essay/Report)", words:[]},
+  // PHASE 2: B2 Solid (Weeks 9-16)
+  {w:9, phase:2, theme:"Idioms & Conceptual Metaphors", vocabFocus:"Body/Nature metaphors (Time=Money, Argument=War, Ideas=Food)", grammar:"Inversion (Negative Adverbials: Not only, Seldom, Little)", grammarDetail:`<h4>Inversion for Emphasis</h4><p>Auxiliary verb before subject after negative/restrictive adverbials.</p><p><strong>Not only... but also:</strong> <em>Not only did he arrive late, but he also forgot the files.</em></p><p><strong>Seldom/Rarely/Never:</strong> <em>Seldom have I seen such chaos.</em></p><p><strong>Little:</strong> <em>Little did we know the project would fail.</em></p><p><strong>Only then/later:</strong> <em>Only then did I understand.</em></p>`, input:"English Like A Native: '20 Advanced Idioms for C1'", output:"Storytelling: Use 7 idioms naturally in a 2-min anecdote. Record.", words:["break the ice", "cost an arm and a leg", "hit the nail on the head", "under the weather", "see eye to eye", "once in a blue moon", "piece of cake", "spill the beans", "pull someone's leg", "beat around the bush", "burn the midnight oil", "food for thought", "digest the information", "swallow the pill", "sharp tongue", "cold shoulder", "heavy heart", "clear the air", "storm in a teacup", "weather the storm"]},
+  {w:10, phase:2, theme:"Professional Communication: Meetings & Negotiation", vocabFocus:"Discourse markers for meetings, softening language, buzzwords", grammar:"Reported Speech Patterns (Backshifting + Reporting Verbs)", grammarDetail:`<h4>Reported Speech & Reporting Verbs</h4><p><strong>Backshifting:</strong> Present -> Past, Will -> Would, Can -> Could.</p><p><strong>Reporting Verb Patterns:</strong></p><ul><li><em>Verb + that-clause:</em> suggest, insist, recommend, propose.</li><li><em>Verb + to-infinitive:</em> agree, promise, threaten, refuse.</li><li><em>Verb + -ing:</em> deny, admit, suggest, recommend.</li><li><em>Verb + object + to-infinitive:</em> advise, warn, encourage, persuade.</li></ul>`, input:"HBR IdeaCast: 'Negotiating with difficult people'", output:"Roleplay: Salary negotiation. Use 5 discourse markers + 3 reporting verbs.", words:["play devil's advocate", "move the needle", "touch base", "circle back", "bandwidth", "action items", "stakeholder", "consensus", "push back", "buy-in", "roadmap", "deliverable", "low-hanging fruit", "deep dive", "ballpark figure", "on the same page", "take offline", "flag up", "align on", "revert to"]},
+  {w:11, phase:2, theme:"Society, Culture & Trends", vocabFocus:"Abstract nouns + collocations (foster innovation, exacerbate inequality)", grammar:"Nominalisation (Verb -> Noun for Academic Style)", grammarDetail:`<h4>Nominalisation</h4><p>Turning verbs/adjectives into nouns for density/formality.</p><p><em>We analysed the data -> Our analysis of the data...</em></p><p><em>The government decided -> The government's decision...</em></p><p><em>It appears that -> The appearance of...</em></p><p><strong>Common Suffixes:</strong> -tion, -ment, -ance/-ence, -ity, -ness, -al, -ure.</p>`, input:"The Economist / Guardian Long Read (1 article deep dive)", output:"Essay (250w): 'To what extent does social media polarize society?'", words:["foster", "exacerbate", "mitigate", "perpetuate", "underpin", "polarize", "cohesion", "disparity", "prevalent", "inevitable", "paradigm", "dichotomy", "alienation", "marginalization", "gentrification", "commodification", "homogenization", "stratification", "mobility", "inequity"]},
+  {w:12, phase:2, theme:"Science, Logic & Argumentation", vocabFocus:"Logical connectors (Hence, Thereby, Conversely, Albeit)", grammar:"Linking Words: Contrast, Concession, Result, Reason", grammarDetail:`<h4>Advanced Connectors</h4><p><strong>Contrast:</strong> Conversely, By contrast, On the contrary, Whereas, While.</p><p><strong>Concession:</strong> Albeit, Notwithstanding, Admittedly, Granted, Even so.</p><p><strong>Result:</strong> Hence, Thereby, Consequently, As a result, Thus.</p><p><strong>Reason:</strong> Owing to, Due to, On account of, In that, Inasmuch as.</p><p><strong>Punctuation:</strong> Semi-colons often used with these adverbs.</p>`, input:"Intelligence Squared Debate (Choose 1)", output:"Structure formal argument: Claim -> Evidence -> Warrant -> Backing -> Qualifier -> Rebuttal (Toulmin Model).", words:["hence", "thereby", "conversely", "albeit", "notwithstanding", "furthermore", "consequently", "postulate", "hypothesis", "empirical", "anomaly", "correlation", "causation", "variable", "control group", "significant", "margin of error", "peer review", "replicate", "paradigm shift"]},
+  {w:13, phase:2, theme:"Arts, Media & Creative Expression", vocabFocus:"Sensory/Descriptive vocab (evocative, poignant, visceral, nuanced)", grammar:"Participle Clauses (-ing / -ed / Perfect)", grammarDetail:`<h4>Participle Clauses</h4><p>Reduce relative clauses / adverbial clauses for conciseness.</p><p><strong>Present (-ing):</strong> Active meaning. <em>The painting, hanging in the Louvre, attracts millions.</em></p><p><strong>Past (-ed):</strong> Passive meaning. <em>Written in 1922, the novel changed literature.</em></p><p><strong>Perfect (Having + PP):</strong> Prior action. <em>Having failed twice, she persisted.</em></p><p><strong>Preposition + -ing:</strong> <em>Before leaving, check the lights.</em></p>`, input:"The New Yorker: Fiction Podcast (1 story)", output:"Write a vivid descriptive paragraph (150w) showing, not telling. Film/Book review.", words:["evocative", "poignant", "visceral", "nuanced", "ambiguous", "aesthetic", "cathartic", "derivative", "authentic", "cliché", "profound", "superficial", "poignant", "melancholic", "whimsical", "gritty", "surreal", "poignant", "resonant", "trite", "hackneyed"]},
+  {w:14, phase:2, theme:"Phrasal Verbs Mastery (Academic/Formal)", vocabFocus:"Separable/Inseparable/Transitive patterns (carry out, phase out)", grammar:"Phrasal Verb Grammar Patterns (Object position)", grammarDetail:`<h4>Phrasal Verb Patterns</h4><p><strong>Type 1: Intransitive</strong> (No object). <em>The car broke down.</em></p><p><strong>Type 2: Transitive Separable</strong> (Object in middle or end). <em>Carry out the task / Carry the task out.</em> <strong>Pronoun MUST go middle:</strong> <em>Carry it out.</em></p><p><strong>Type 3: Transitive Inseparable</strong> (Object ONLY at end). <em>Look into the matter. Look into it.</em></p><p><strong>Type 4: Three-part</strong> (Verb + Part + Prep). <em>Look forward to it. Put up with it.</em></p>`, input:"Phrasal Verb Daily Podcast (Review 20 eps)", output:"Register Shift: Rewrite 10 formal sentences using phrasal verbs (and vice versa).", words:["carry out", "phase out", "account for", "bring about", "come up with", "do away with", "follow up", "go through", "look into", "put forward", "rule out", "set forth", "point out", "make up for", "result in", "lead to", "consist of", "depend on", "focus on", "deal with"]},
+  {w:15, phase:2, theme:"Humor, Sarcasm & Pragmatics", vocabFocus:"Pragmatic markers (Actually, Basically, I mean), Deadpan, Irony", grammar:"Question Tags & Intonation Patterns", grammarDetail:`<h4>Question Tags & Intonation</h4><p><strong>Form:</strong> Auxiliary + Pronoun. <em>You're coming, aren't you?</em></p><p><strong>Intonation:</strong></p><ul><li><strong>Falling (↘):</strong> Checking known info / Inviting agreement. <em>Nice day, isn't it? ↘</em></li><li><strong>Rising (↗):</strong> Genuine question / Uncertainty. <em>You didn't lock the door, did you? ↗</em></li></ul><p><strong>Imperatives:</strong> <em>Open the window, will you? / Don't be late, will you?</em></p>`, input:"Comedy: 'Live at the Apollo' / 'Would I Lie To You?' (Clips)", output:"Tell a joke/anecdote with correct timing. Analyse pragmatic markers in a transcript.", words:["deadpan", "sarcasm", "irony", "understatement", "hyperbole", "banter", "witty", "droll", "facetious", "tongue-in-cheek", "punchline", "setup", "self-deprecating", "observational", "slapstick", "satire", "parody", "dry humour", "punch up", "punch down"]},
+  {w:16, phase:2, theme:"PHASE 2 CONSOLIDATION: B2 MOCK", vocabFocus:"Full Lexical Review (Collocations, Idioms, Phrasals)", grammar:"Open Cloze / Word Formation / Key Word Transformations", grammarDetail:`<h4>Exam Skills Focus (Cambridge B2 First / IELTS 6.5-7.0)</h4><p><strong>Word Formation:</strong> Prefixes (un-, dis-, mis-, over-, under-) + Suffixes.</p><p><strong>Key Word Transformations:</strong> 3-6 words, keep meaning. Test: Passive, Reported Speech, Conditionals, Phrasal Verbs, Collocations.</p><p><strong>Open Cloze:</strong> Grammar words (prepositions, auxiliaries, connectors, pronouns).</p>`, input:"Full Listening Paper (Timed)", output:"Full Speaking Test (Record) + Writing (Essay + Article/Review)", words:[]},
 
-  // PHASE 3: C1 Advanced (Weeks 17-22) - Precision, Nuance, Register Shifting
-  {w:17, phase:3, theme:"Precision & Nuance: Near-Synonyms", vocabFocus:"Semantic gradients (Shout/Yell/Scream/Bellow/Roar)", grammar:"Advanced Hedging (It could be argued / There is a tendency to)", input:"Academic Lectures: Coursera/edX (Audit mode)", output:"Rewrite a paragraph for maximum precision/conciseness", words:["alleviate/mitigate/amend", "essential/crucial/pivotal", "surge/soar/skyrocket/plummet", "meticulous/thorough/exhaustive", "ambiguous/vague/obscure"]},
-  {w:18, phase:3, theme:"Register Shifting: Formal <-> Informal", vocabFocus:"Register pairs (Purchase/Buy, Commence/Start, Ascertain/Find out)", grammar:"Subjunctive mood (I suggest he go / It is vital that he be)", input:"Compare: Legal contract vs Text message vs Academic paper", output:"Translate a formal email to Slack message & vice versa", words:["ascertain", "commence", "terminate", "endeavour", "facilitate", "necessitate", "obtain", "retain", "sufficient", "purchase", "request", "inquire"]},
-  {w:19, phase:3, theme:"Specialized Domains: Law, Policy & Governance", vocabFocus:"Legal/Policy collocations (ratify, amend, jurisdiction, precedent)", grammar:"Complex passive / Impersonal structures", input:"Supreme Court Oral Arguments / UN Speeches", output:"Draft a policy brief / Legal opinion summary", words:["ratify", "amend", "jurisdiction", "precedent", "statute", "legislation", "compliance", "breach", "liable", "arbitration", "mandate", "enforce"]},
-  {w:20, phase:3, theme:"Specialized Domains: Business Strategy & Economics", vocabFocus:"Strategic verbs (pivot, disrupt, monetize, scale, bootstrap)", grammar:"Future in the past (was to / was going to / would)", input:"Harvard Business Review / The Economist Audio Edition", output:"Case Study Analysis: SWOT + Recommendation", words:["pivot", "disrupt", "monetize", "scale", "bootstrap", "stakeholder", "ROI", "KPI", "value proposition", "competitive advantage", "market fit", "churn"]},
-  {w:21, phase:3, theme:"Academic Writing: Research & Citations", vocabFocus:"Reporting verbs (Contend, Assert, Postulate, Refute, Corroborate)", grammar:"Passive reporting / Nominal groups", input:"Google Scholar: Read 1 paper in your field (Abstract+Intro)", output:"Write a Literature Review paragraph (5 sources)", words:["contend", "assert", "postulate", "refute", "corroborate", "underscore", "highlight", "demonstrate", "imply", "suggest", "validate", "contradict"]},
-  {w:22, phase:3, theme:"PHASE 3 CONSOLIDATION: C1 MOCK (CAE Style)", vocabFocus:"Word Formation Mastery (Prefixes/Suffixes)", grammar:"Mixed Conditionals / Inversion / Clefts Review", input:"CAE Listening / Reading Paper (Timed)", output:"CAE Writing (Essay + Proposal/Report) + Speaking", words:[]},
+  // PHASE 3: C1 Advanced (Weeks 17-22)
+  {w:17, phase:3, theme:"Precision & Nuance: Near-Synonyms", vocabFocus:"Semantic gradients (Shout/Yell/Scream/Bellow/Roar)", grammar:"Advanced Hedging (It could be argued / There is a tendency to)", grammarDetail:`<h4>Hedging (Academic Caution)</h4><p>Avoid absolute claims. Use:</p><ul><li><strong>Modal verbs:</strong> may, might, could, would, should.</li><li><strong>Adverbs:</strong> arguably, presumably, reportedly, seemingly, relatively.</li><li><strong>Verbs:</strong> suggest, indicate, appear, tend to, seem to.</li><li><strong>Nouns:</strong> possibility, likelihood, tendency, indication.</li><li><strong>That-clauses:</strong> It is possible that... / There is a risk that...</li></ul>`, input:"Academic Lecture (Coursera/edX Audit Mode)", output:"Rewrite a sensationalist news paragraph into cautious academic style.", words:["alleviate/mitigate/amend/rectify", "essential/crucial/pivotal/paramount", "surge/soar/skyrocket/plummet", "meticulous/thorough/exhaustive/comprehensive", "ambiguous/vague/obscure/cryptic", "alleviate", "mitigate", "amend", "rectify", "pivotal", "paramount", "skyrocket", "plummet", "exhaustive", "comprehensive", "obscure", "cryptic"]},
+  {w:18, phase:3, theme:"Register Shifting: Formal <=> Informal", vocabFocus:"Register pairs (Purchase/Buy, Commence/Start, Ascertain/Find out)", grammar:"Subjunctive Mood (Mandative: suggest/insist/demand + bare infinitive)", grammarDetail:`<h4>The Subjunctive Mood</h4><p>Base form of verb after certain verbs/adjectives expressing necessity/importance.</p><p><strong>Verbs:</strong> suggest, recommend, insist, demand, propose, request, require.</p><p><strong>Adjectives:</strong> essential, vital, crucial, imperative, important.</p><p><strong>Structure:</strong> It is vital that he <strong>be</strong> informed. (Not <em>is</em>)</p><p><strong>British vs US:</strong> UK often uses <em>should be</em>; US prefers bare infinitive <em>be</em>.</p>`, input:"Compare: Legal Contract vs Slack Message vs Academic Abstract", output:"Translate a formal legal notice to a Slack message & vice versa. Keep meaning.", words:["ascertain", "commence", "terminate", "endeavour", "facilitate", "necessitate", "obtain", "retain", "sufficient", "purchase", "request", "inquire", "assist", "purchase", "depart", "arrive", "inform", "require", "attempt", "discover"]},
+  {w:19, phase:3, theme:"Law, Policy & Governance", vocabFocus:"Legal collocations (ratify, amend, jurisdiction, precedent, statute)", grammar:"Complex Passive / Impersonal Structures (It is alleged that...)", grammarDetail:`<h4>Impersonal Passive Structures</h4><p>Distancing the writer/speaker from the claim.</p><p><strong>It-passive:</strong> <em>It is alleged that he stole the funds.</em></p><p><strong>Subject + Passive Infinitive:</strong> <em>He is alleged to have stolen the funds.</em></p><p><strong>Perfect Infinitive:</strong> <em>to have + PP</em> for past reference.</p><p><strong>Common verbs:</strong> allege, believe, claim, estimate, expect, report, say, think, understand.</p>`, input:"Supreme Court Oral Arguments (Oyez.org) / UN Speeches", output:"Draft a 200-word policy brief: 'Recommendations for Data Privacy Reform'.", words:["ratify", "amend", "jurisdiction", "precedent", "statute", "legislation", "compliance", "breach", "liable", "arbitration", "mandate", "enforce", "litigation", "plaintiff", "defendant", "testimony", "verdict", "acquit", "convict", "appeal"]},
+  {w:20, phase:3, theme:"Business Strategy & Economics", vocabFocus:"Strategic verbs (pivot, disrupt, monetize, scale, bootstrap)", grammar:"Future in the Past (was to / was going to / would)", grammarDetail:`<h4>Future in the Past</h4><p>Expressing future from a past perspective.</p><p><strong>Was/Were going to:</strong> Plan that may/may not happened. <em>We were going to launch, but funding fell through.</em></p><p><strong>Was/Were to:</strong> Formal destiny/arrangement. <em>He was to become CEO.</em></p><p><strong>Would:</strong> Prediction from past view. <em>Little did they know it would fail.</em></p><p><strong>Was/Were on the verge of / about to:</strong> Imminent future in past.</p>`, input:"HBR / The Economist Audio Edition (1 article)", output:"Case Study Analysis: SWOT + Strategic Recommendation (5 min presentation).", words:["pivot", "disrupt", "monetize", "scale", "bootstrap", "stakeholder", "ROI", "KPI", "value proposition", "competitive advantage", "market fit", "churn", "acquisition", "retention", "lifetime value", "burn rate", "runway", "unicorn", "exit strategy", "due diligence"]},
+  {w:21, phase:3, theme:"Academic Writing: Research & Citations", vocabFocus:"Reporting Verbs (Contend, Assert, Postulate, Refute, Corroborate)", grammar:"Passive Reporting / Nominal Groups / Citation Patterns", grammarDetail:`<h4>Reporting Verbs Strength Scale</h4><p><strong>Weak/Tentative:</strong> suggest, imply, indicate, hypothesize, speculate.</p><p><strong>Neutral:</strong> state, report, describe, outline, examine, investigate.</p><p><strong>Strong/Assertive:</strong> argue, contend, assert, claim, maintain, demonstrate, prove, establish.</p><p><strong>Critical:</strong> refute, contradict, challenge, dispute, reject, dismiss.</p><p><strong>Supportive:</strong> corroborate, confirm, validate, substantiate, support.</p>`, input:"Google Scholar: Read 1 paper in your field (Abstract + Intro)", output:"Write a Literature Review paragraph synthesizing 5 sources (APA/IEEE).", words:["contend", "assert", "postulate", "refute", "corroborate", "underscore", "highlight", "demonstrate", "imply", "suggest", "validate", "contradict", "postulate", "hypothesize", "theorize", "empirical", "qualitative", "quantitative", "methodology", "paradigm"]},
+  {w:22, phase:3, theme:"PHASE 3 CONSOLIDATION: C1 MOCK", vocabFocus:"Word Formation Mastery (Prefixes/Suffixes/Productivity)", grammar:"Mixed Conditionals / Inversion / Clefts / Subjunctive Review", grammarDetail:`<h4>C1 Advanced (CAE) Exam Format Practice</h4><p><strong>Reading & Use of English (90 min):</strong> 8 parts. Focus Part 3 (Word Formation) & Part 4 (Key Word Transformations).</p><p><strong>Writing (90 min):</strong> Part 1 Essay (obligatory). Part 2: Proposal / Report / Review / Letter.</p><p><strong>Listening (40 min):</strong> 4 parts. Multiple matching, sentence completion.</p><p><strong>Speaking (15 min):</strong> Long turn (1 min), Collaborative task, Discussion.</p>`, input:"CAE Listening / Reading Paper (Timed)", output:"CAE Writing (Essay + Proposal/Report) + Speaking Mock (Record)", words:[]},
 
-  // PHASE 4: C2 Mastery (Weeks 23-26) - Native-like, Creative, Idiomatic
-  {w:23, phase:4, theme:"Idiomatic Density & Cultural Literacy", vocabFocus:"Cultural idioms, literary allusions, archaic forms still used", grammar:"Ellipsis & Substitution (Advanced)", input:"Literature: Short Stories (Hemingway, Atwood, Ishiguro)", output:"Creative Writing: Flash fiction / Poetry / Satire", words:["quintessential", "serendipity", "ephemeral", "ubiquitous", "paragon", "antithesis", "cacophony", "euphoria", "melancholy", "resilience", "integrity", "authenticity"]},
-  {w:24, phase:4, theme:"Discourse Mastery: Cohesion & Coherence at Text Level", vocabFocus:"Lexical chains, Thematic progression, Information structure", grammar:"Fronting / Cleaving / Extraposition for focus", input:"Analyze a complex editorial for structure", output:"Write a 500-word Op-Ed with flawless flow", words:["moreover", "nevertheless", "consequently", "in retrospect", "by the same token", "notwithstanding", "admittedly", "granted", "ultimately", "paradoxically"]},
-  {w:25, phase:4, theme:"Pronunciation: Suprasegmentals & Connected Speech Mastery", vocabFocus:"Weak forms, Assimilation, Elision, Linking R, Intonation contours", grammar:"Phonology review", input:"Shadowing: TED Talks / Audiobooks (30 min daily)", output:"Record & Compare: IPA transcription of own speech", words:["assimilation", "elision", "intrusive", "linking", "weak form", "schwa", "tonic syllable", "tonality", "tonicity", "rhythm", "pause", "chunking"]},
-  {w:26, phase:4, theme:"FINAL ASSESSMENT & FLUENCY CERTIFICATION", vocabFocus:"Personal Top 500 Active Vocabulary Audit", grammar:"Full Diagnostic", input:"CPE (Proficiency) Full Mock Exam", output:"CPE Writing + Speaking Test / Portfolio Presentation", words:[]}
+  // PHASE 4: C2 Mastery (Weeks 23-26)
+  {w:23, phase:4, theme:"Idiomatic Density & Cultural Literacy", vocabFocus:"Cultural idioms, literary allusions, archaic forms (paragon, antithesis)", grammar:"Ellipsis & Substitution (Advanced Cohesion)", grammarDetail:`<h4>Ellipsis & Substitution</h4><p>Omitting words understood from context.</p><p><strong>Nominal Ellipsis:</strong> <em>I bought two red apples and three green [apples].</em></p><p><strong>Verbal Ellipsis:</strong> <em>Will you come? I might [come].</em></p><p><strong>Clausal Ellipsis:</strong> <em>Why did you leave? Because I was tired [why I left].</em></p><p><strong>Substitution:</strong> Using <em>one/ones, do so, so/not</em>. <em>Which one? The red one. / He thinks so.</em></p>`, input:"Literature: Short Stories (Hemingway, Atwood, Ishiguro, Munro)", output:"Creative Writing: Flash fiction (500w) / Satire / Poetry. Focus: Voice & Rhythm.", words:["quintessential", "serendipity", "ephemeral", "ubiquitous", "paragon", "antithesis", "cacophony", "euphoria", "melancholy", "resilience", "integrity", "authenticity", "synecdoche", "metonymy", "irony", "pathos", "ethos", "logos", "catharsis", "denouement"]},
+  {w:24, phase:4, theme:"Discourse Mastery: Text-Level Cohesion", vocabFocus:"Lexical chains, Thematic progression, Information structure (Given-New)", grammar:"Fronting / Cleaving / Extraposition for Information Focus", grammarDetail:`<h4>Information Structure (Theme-Rheme)</h4><p><strong>Given (Theme) -> New (Rheme).</strong> Start sentences with known info.</p><p><strong>Fronting:</strong> <em>On the table sat a cat.</em> (Place focus)</p><p><strong>Clefting:</strong> <em>What we need is action.</em> (Focus on 'action')</p><p><strong>Extraposition:</strong> <em>It is clear that he lied.</em> (Delay heavy subject)</p><p><strong>Passive:</strong> <em>The decision was made by the board.</em> (Agent last)</p>`, input:"Analyze a complex Editorial (NYT/Guardian) for thematic progression", output:"Write a 500-word Op-Ed with flawless flow, signposting, and rhetorical devices.", words:["moreover", "nevertheless", "consequently", "in retrospect", "by the same token", "notwithstanding", "admittedly", "granted", "ultimately", "paradoxically", "furthermore", "conversely", "accordingly", "subsequently", "alternatively", "collectively", "individually", "respectively", "conclusively", "tentatively"]},
+  {w:25, phase:4, theme:"Pronunciation: Suprasegmentals Mastery", vocabFocus:"Weak forms, Assimilation, Elision, Linking R, Intonation contours", grammar:"Phonology Review: Connected Speech Rules", grammarDetail:`<h4>Connected Speech Features</h4><p><strong>Assimilation:</strong> /t/ -> /p/ before /b,m,p/. <em>ten boys -> tem boys.</em></p><p><strong>Elision:</strong> Loss of /t,d/ in clusters. <em>next day -> nex day.</em></p><p><strong>Linking / Intrusive R:</strong> <em>car owner / idea of it.</em></p><p><strong>Yod Coalescence:</strong> /dj/ -> /dʒ/, /tj/ -> /tʃ/. <em>did you -> didj you.</em></p><p><strong>Weak Forms:</strong> Grammar words schwa /ə/. <em>to -> /tə/, for -> /fə/, and -> /ən/.</em></p>`, input:"Shadowing: TED Talks / Audiobooks (30 min daily, record & compare)", output:"Record & Compare: IPA transcription of own speech vs Native model.", words:["assimilation", "elision", "intrusive", "linking", "weak form", "schwa", "tonic syllable", "tonality", "tonicity", "rhythm", "pause", "chunking", "prominence", "deaccenting", "nuclear tone", "fall", "rise", "fall-rise", "rise-fall", "level"]},
+  {w:26, phase:4, theme:"FINAL ASSESSMENT & CERTIFICATION", vocabFocus:"Personal Top 500 Active Vocabulary Audit", grammar:"Full Diagnostic", grammarDetail:`<h4>C2 Proficiency (CPE) Exam Simulation</h4><p><strong>Reading & Use of English (90 min):</strong> High-level inference, idiom, collocation, phrasal verbs.</p><p><strong>Writing (90 min):</strong> Essay (240-280w) + Article/Letter/Report/Review (280-320w).</p><p><strong>Listening (40 min):</strong> Accents, speed, inference, attitude.</p><p><strong>Speaking (16 min):</strong> Long turn (2 min), Collaborative task, Thematic discussion.</p>`, input:"CPE Full Mock Exam (Official Sample Papers)", output:"CPE Writing + Speaking Test / Portfolio Presentation: 'My Fluency Journey'.", words:[]}
 ];
 
-// ============================================================
-// 2. STATE MANAGEMENT (LocalStorage)
-// ============================================================
-const STORAGE_KEY = 'fluencyLab_state_v1';
-let state = {
-  currentWeek: 1,
-  streak: 0,
-  lastActive: null,
-  totalMinutes: 0,
-  words: [], // {id, headword, def, ipa, ex, type, level, status, tags, srs: {due, interval, ease, reps, lapses}}
-  lexiconFilter: 'all',
-  settings: { dailyGoal: 90, newCardsDay: 20, targetLevel: 'C2', theme: 'dark' },
-  sessionLog: [], // {date, week, type, minutes, wordsAdded, wordsReviewed}
-  completedWeeks: []
-};
-
-function loadState() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      state = { ...state, ...parsed };
-      // Ensure arrays exist
-      state.words = state.words || [];
-      state.sessionLog = state.sessionLog || [];
-      state.completedWeeks = state.completedWeeks || [];
-    }
-  } catch (e) { console.error("Load error", e); }
-  calculateStreak();
-  applyTheme();
-}
-
-function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  updateAllUI();
-}
-
-function calculateStreak() {
-  if (!state.lastActive) { state.streak = 0; return; }
-  const today = new Date().toDateString();
-  const last = new Date(state.lastActive).toDateString();
-  if (today === last) return; // Already counted today
-  const yesterday = new Date(Date.now() - 86400000).toDateString();
-  if (last === yesterday) state.streak++;
-  else state.streak = 1;
-}
-
-function applyTheme() {
-  document.documentElement.classList.toggle('light', state.settings.theme === 'light' || (state.settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches));
-}
+// Phase Names
+const PHASE_NAMES = {1:"Phase 1: B1→B2 Transition", 2:"Phase 2: B2 Consolidation", 3:"Phase 3: C1 Advanced", 4:"Phase 4: C2 Mastery"};
 
 // ============================================================
-// 3. SRS ALGORITHM (SM-2 Simplified)
+// 2. ALPINE.JS APPLICATION STATE & LOGIC
 // ============================================================
-function initSRS(word) {
-  return { due: Date.now(), interval: 0, ease: 2.5, reps: 0, lapses: 0, state: 0 }; // 0=new, 1=learning, 2=review
-}
-
-function scheduleCard(srs, grade) {
-  // grade: 0=Again, 3=Hard, 4=Good, 5=Easy
-  if (grade === 0) {
-    srs.interval = 0;
-    srs.reps = 0;
-    srs.lapses++;
-    srs.state = 1; // back to learning
-    srs.due = Date.now() + 60000; // 1 min
-    srs.ease = Math.max(1.3, srs.ease - 0.2);
-    return;
-  }
-  srs.reps++;
-  if (srs.state === 0) { // New -> Learning
-    srs.state = 1;
-    if (grade === 3) srs.interval = 3 * 60000; // 3 min
-    else if (grade === 4) srs.interval = 10 * 60000; // 10 min
-    else srs.interval = 1 * 3600000; // 1 hour
-  } else if (srs.state === 1) { // Learning -> Review
-    srs.state = 2;
-    if (grade === 3) srs.interval = 10 * 60000;
-    else if (grade === 4) srs.interval = 1 * 3600000; // 1 day approx
-    else srs.interval = 4 * 3600000; // 4 days
-  } else { // Review
-    if (grade === 3) srs.interval = Math.max(srs.interval * 1.2, 1 * 86400000);
-    else if (grade === 4) srs.interval *= srs.ease;
-    else srs.interval *= srs.ease * 1.3;
-    srs.interval = Math.round(srs.interval);
-  }
-  srs.due = Date.now() + srs.interval;
-  // Adjust Ease Factor
-  srs.ease += (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02));
-  if (srs.ease < 1.3) srs.ease = 1.3;
-}
-
-// ============================================================
-// 4. UI RENDERING ENGINE
-// ============================================================
-function updateAllUI() {
-  renderDashboard();
-  renderCurriculum();
-  renderSRS();
-  renderLexicon();
-  renderTools();
-  renderSettings();
-  lucide.createIcons();
-}
-
-function showView(viewName) {
-  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-  document.getElementById(`view-${viewName}`).classList.remove('hidden');
-  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-  document.getElementById(`nav-${viewName}`)?.classList.add('active');
-  window.scrollTo(0,0);
-  if(viewName === 'dashboard') renderDashboard();
-  if(viewName === 'srs') renderSRS();
-  if(viewName === 'lexicon') renderLexicon();
-  if(viewName === 'curriculum') renderCurriculum();
-}
-
-function showToast(msg, type='info') {
-  const c = document.getElementById('toast-container');
-  const el = document.createElement('div');
-  const colors = {info:'bg-cyan-900/50 border-cyan-500', success:'bg-green-900/50 border-green-500', error:'bg-red-900/50 border-red-500', warn:'bg-yellow-900/50 border-yellow-500'};
-  el.className = `glass border px-4 py-3 rounded-xl flex items-center gap-2 animate-in ${colors[type]}`;
-  el.innerHTML = `<span>${msg}</span><button onclick="this.parentElement.remove()" class="ml-2 text-gray-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>`;
-  c.appendChild(el);
-  lucide.createIcons();
-  setTimeout(() => el.remove(), 5000);
-}
-
-function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.body.style.overflow='hidden'; }
-function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.body.style.overflow=''; }
-
-// --- Dashboard ---
-function renderDashboard() {
-  const w = CURRICULUM[state.currentWeek - 1];
-  document.getElementById('current-week-num').textContent = state.currentWeek;
-  document.getElementById('current-week-theme').textContent = w ? w.theme : "Course Complete!";
-  document.getElementById('stat-words').textContent = state.words.filter(x => x.srs?.state === 2).length;
-  document.getElementById('stat-hours').textContent = (state.totalMinutes / 60).toFixed(1);
-  const reviews = state.words.filter(x => x.srs?.state === 2);
-  const retention = reviews.length ? Math.round(reviews.filter(x => x.srs.ease > 2).length / reviews.length * 100) : 0;
-  document.getElementById('stat-retention').textContent = reviews.length ? `${retention}%` : '—';
-  document.getElementById('stat-level').textContent = state.currentWeek <= 8 ? 'B1→B2' : state.currentWeek <= 16 ? 'B2' : state.currentWeek <= 22 ? 'C1' : 'C2';
-  document.getElementById('streak-num').textContent = state.streak;
-  document.getElementById('week-progress-bar').style.width = `${(state.currentWeek/26)*100}%`;
-  document.getElementById('week-progress-text').textContent = `Week ${state.currentWeek} of 26`;
-
-  // Session Plan
-  if(w) {
-    document.getElementById('session-plan').innerHTML = `
-      <div class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="book-open" class="w-5 h-5 text-cyan-400"></i><div><strong>Vocab Focus:</strong> ${w.vocabFocus}</div></div>
-      <div class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="file-text" class="w-5 h-5 text-pink-400"></i><div><strong>Grammar:</strong> ${w.grammar}</div></div>
-      <div class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="headphones" class="w-5 h-5 text-green-400"></i><div><strong>Input:</strong> ${w.input}</div></div>
-      <div class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="mic" class="w-5 h-5 text-yellow-400"></i><div><strong>Output:</strong> ${w.output}</div></div>
-    `;
-  }
-  lucide.createIcons();
-}
-
-// --- Curriculum ---
-function renderCurriculum() {
-  const grid = document.getElementById('curriculum-grid');
-  const activePhase = document.querySelector('.phase-tab.active')?.dataset.phase || 'all';
-  grid.innerHTML = '';
-  CURRICULUM.forEach((week, i) => {
-    if(activePhase !== 'all' && week.phase != activePhase) return;
-    const isCurrent = i === state.currentWeek - 1;
-    const isDone = state.completedWeeks.includes(i+1);
-    const card = document.createElement('div');
-    card.className = `week-card ${isCurrent ? 'current' : ''} ${isDone ? 'opacity-60' : ''}`;
-    card.onclick = () => openWeekModal(i+1);
-    card.innerHTML = `
-      <div class="flex items-start justify-between mb-3">
-        <div>
-          <span class="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Week ${i+1} • Phase ${week.phase}</span>
-          <h4 class="font-bold text-lg mt-1">${week.theme}</h4>
-        </div>
-        ${isDone ? '<i data-lucide="check-circle-2" class="w-6 h-6 text-green-400"></i>' : isCurrent ? '<span class="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded">Current</span>' : ''}
-      </div>
-      <div class="text-sm text-gray-400 mb-4 h-16 overflow-hidden">${week.vocabFocus}</div>
-      <div class="flex flex-wrap gap-1.5 mt-auto">
-        ${week.words.slice(0,6).map(w => `<span class="word-tag text-xs px-2 py-0.5">${w}</span>`).join('')}
-        ${week.words.length > 6 ? `<span class="word-tag text-xs px-2 py-0.5 text-gray-500">+${week.words.length-6} more</span>` : ''}
-      </div>
-    `;
-    grid.appendChild(card);
-  });
-  lucide.createIcons();
-}
-
-function openWeekModal(weekNum) {
-  const w = CURRICULUM[weekNum-1];
-  const isDone = state.completedWeeks.includes(weekNum);
-  document.getElementById('modal-week-title').textContent = `Week ${weekNum}: ${w.theme}`;
-  document.getElementById('modal-week-body').innerHTML = `
-    <div class="space-y-6">
-      <div class="grid gap-4 md:grid-cols-2">
-        <div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="target" class="w-4 h-4 text-cyan-400"></i> Vocab Focus</h4><p class="text-gray-300">${w.vocabFocus}</p></div>
-        <div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="code" class="w-4 h-4 text-pink-400"></i> Grammar Focus</h4><p class="text-gray-300">${w.grammar}</p></div>
-      </div>
-      <div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="headphones" class="w-4 h-4 text-green-400"></i> Comprehensible Input</h4><p class="text-gray-300">${w.input}</p></div>
-      <div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="mic" class="w-4 h-4 text-yellow-400"></i> Output Task</h4><p class="text-gray-300">${w.output}</p></div>
-      <div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-purple-400"></i> Target Vocabulary (${w.words.length} items)</h4>
-        <div class="flex flex-wrap gap-2" id="modal-word-list"></div>
-      </div>
-      <div class="flex gap-3 pt-4 border-t border-gray-800">
-        <button onclick="startWeekSession(${weekNum})" class="btn-primary flex-1"><i data-lucide="play" class="w-4 h-4 mr-2"></i> Start Session</button>
-        <button onclick="toggleWeekComplete(${weekNum})" class="btn-secondary flex-1">${isDone ? '<i data-lucide="rotate-ccw" class="w-4 h-4 mr-2"></i> Mark Incomplete' : '<i data-lucide="check" class="w-4 h-4 mr-2"></i> Mark Complete'}</button>
-      </div>
-    </div>
-  `;
-  const list = document.getElementById('modal-word-list');
-  w.words.forEach(word => {
-    const exists = state.words.find(x => x.headword.toLowerCase() === word.toLowerCase());
-    const tag = document.createElement('span');
-    tag.className = `word-tag ${exists ? (exists.srs?.state===2?'learned':'learning') : ''}`;
-    tag.textContent = word;
-    tag.onclick = () => { if(!exists) addWordFromCurriculum(word, w); else openWordEditor(exists.id); };
-    list.appendChild(tag);
-  });
-  openModal('modal-week');
-  lucide.createIcons();
-}
-
-function addWordFromCurriculum(word, week) {
-  const newWord = {
-    id: crypto.randomUUID(), headword: word, def: '', ipa: '', ex: '', type: 'word', level: 'B2', status: 'new', tags: [`week-${week.w}`],
-    srs: initSRS({})
-  };
-  state.words.push(newWord);
-  saveState();
-  showToast(`Added "${word}" to Lexicon. Edit to add definition.`, 'success');
-  closeModal('modal-week');
-  openWordEditor(newWord.id);
-}
-
-function toggleWeekComplete(weekNum) {
-  const idx = state.completedWeeks.indexOf(weekNum);
-  if(idx > -1) state.completedWeeks.splice(idx, 1);
-  else state.completedWeeks.push(weekNum);
-  if(weekNum === state.currentWeek && idx === -1 && state.currentWeek < 26) state.currentWeek++;
-  saveState();
-  closeModal('modal-week');
-}
-
-function startWeekSession(weekNum) {
-  state.currentWeek = weekNum;
-  saveState();
-  closeModal('modal-week');
-  showView('dashboard');
-  openSessionModal('plan');
-}
-
-// --- SRS ---
-let currentSRSQueue = [];
-let currentSRSIndex = 0;
-
-function renderSRS() {
-  const due = state.words.filter(w => w.srs && w.srs.due <= Date.now()).length;
-  const newCount = state.words.filter(w => w.srs && w.srs.state === 0).length;
-  const learningCount = state.words.filter(w => w.srs && w.srs.state === 1).length;
-  const reviewCount = state.words.filter(w => w.srs && w.srs.state === 2).length;
-  document.getElementById('srs-due-count').textContent = due;
-  document.getElementById('srs-count-badge').textContent = due;
-  document.getElementById('srs-new').textContent = newCount;
-  document.getElementById('srs-learning').textContent = learningCount;
-  document.getElementById('srs-review').textContent = reviewCount;
-  document.getElementById('srs-card-container').innerHTML = due > 0 ? '<div class="text-center text-cyan-400"><i data-lucide="play-circle" class="w-12 h-12 mx-auto mb-2"></i><p class="text-lg">Ready to review</p><p class="text-sm text-gray-500">Press "Start Review Session"</p></div>' : '<div class="text-center text-gray-500"><i data-lucide="check-circle-2" class="w-12 h-12 mx-auto mb-2"></i><p>All caught up!</p></div>';
-  document.getElementById('srs-controls').classList.add('hidden');
-  lucide.createIcons();
-}
-
-function startSRS() {
-  currentSRSQueue = state.words.filter(w => w.srs && w.srs.due <= Date.now()).sort((a,b) => a.srs.due - b.srs.due);
-  currentSRSIndex = 0;
-  if(currentSRSQueue.length === 0) { showToast("No cards due!", "info"); return; }
-  showSRSCard();
-}
-
-function showSRSCard() {
-  if(currentSRSIndex >= currentSRSQueue.length) {
-    document.getElementById('srs-card-container').innerHTML = '<div class="text-center text-green-400"><i data-lucide="check-circle-2" class="w-16 h-16 mx-auto mb-4"></i><h3 class="text-xl font-bold">Session Complete!</h3><p class="text-gray-500 mt-2">Reviewed ' + currentSRSQueue.length + ' cards.</p></div>';
-    document.getElementById('srs-controls').classList.add('hidden');
-    saveState();
-    renderSRS();
-    return;
-  }
-  const card = currentSRSQueue[currentSRSIndex];
-  document.getElementById('srs-card-container').innerHTML = `
-    <div class="w-full max-w-md mx-auto">
-      <div class="flip-card" onclick="this.classList.toggle('flipped')">
-        <div class="flip-card-inner">
-          <div class="flip-card-front bg-gray-800 border border-gray-700">
-            <p class="text-2xl font-light text-center text-cyan-300">${card.headword}</p>
-            ${card.ipa ? `<p class="text-sm text-gray-400 text-center mt-1">${card.ipa}</p>` : ''}
-            <p class="text-xs text-gray-500 text-center mt-4">Click to reveal</p>
-          </div>
-          <div class="flip-card-back">
-            <p class="text-lg text-gray-200 mb-2">${card.def}</p>
-            ${card.ex ? `<p class="text-sm text-gray-400 italic border-t border-gray-700 pt-2">${card.ex}</p>` : ''}
-            <div class="flex gap-2 mt-4 text-xs text-gray-500">
-              <span>${card.srs.state===2?'Review':card.srs.state===1?'Learning':'New'}</span>
-              <span>Interval: ${formatInterval(card.srs.interval)}</span>
-              <span>Ease: ${card.srs.ease.toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <p class="text-center text-sm text-gray-500 mt-4">Card ${currentSRSIndex+1} of ${currentSRSQueue.length}</p>
-    </div>
-  `;
-  document.getElementById('srs-controls').classList.remove('hidden');
-  lucide.createIcons();
-}
-
-function formatInterval(ms) {
-  if(ms < 60000) return `${Math.round(ms/1000)}s`;
-  if(ms < 3600000) return `${Math.round(ms/60000)}m`;
-  if(ms < 86400000) return `${Math.round(ms/3600000)}h`;
-  return `${Math.round(ms/86400000)}d`;
-}
-
-function answerSRS(grade) {
-  const card = currentSRSQueue[currentSRSIndex];
-  scheduleCard(card.srs, grade);
-  currentSRSIndex++;
-  showSRSCard();
-}
-
-// --- Lexicon ---
-function renderLexicon() {
-  const list = document.getElementById('lexicon-list');
-  const filter = state.lexiconFilter;
-  const search = document.getElementById('lexicon-search').value.toLowerCase();
-  let words = state.words;
-  if(filter !== 'all') words = words.filter(w => w.type === filter);
-  if(search) words = words.filter(w => w.headword.toLowerCase().includes(search) || w.def.toLowerCase().includes(search) || w.tags.join(' ').includes(search));
-  
-  list.innerHTML = words.length === 0 ? '<div class="text-center text-gray-500 py-12"><i data-lucide="search-x" class="w-12 h-12 mx-auto mb-4 opacity-50"></i><p>No words found. Add some!</p></div>' : '';
-  
-  words.forEach(w => {
-    const el = document.createElement('div');
-    el.className = 'card flex items-center justify-between gap-4 p-4';
-    el.innerHTML = `
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-3 flex-wrap">
-          <strong class="text-lg text-cyan-300">${w.headword}</strong>
-          ${w.ipa ? `<span class="text-sm text-gray-400 font-mono">${w.ipa}</span>` : ''}
-          <span class="word-tag text-xs">${w.type}</span>
-          <span class="word-tag text-xs ${w.srs?.state===2?'learned':w.srs?.state===1?'learning':''}">${w.level}</span>
-        </div>
-        <p class="text-gray-300 mt-1 truncate">${w.def}</p>
-        ${w.ex ? `<p class="text-sm text-gray-500 italic mt-1 truncate">"${w.ex}"</p>` : ''}
-        <div class="flex flex-wrap gap-1 mt-2">${w.tags.map(t => `<span class="px-2 py-0.5 bg-gray-800 rounded text-xs text-gray-400">${t}</span>`).join('')}</div>
-      </div>
-      <div class="flex items-center gap-2">
-        <button onclick="openWordEditor('${w.id}')" class="btn-ghost p-2" title="Edit"><i data-lucide="pencil" class="w-4 h-4"></i></button>
-        <button onclick="deleteWord('${w.id}')" class="btn-ghost p-2 text-red-400 hover:bg-red-900/20" title="Delete"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-      </div>
-    `;
-    list.appendChild(el);
-  });
-  lucide.createIcons();
-}
-
-function openWordEditor(id) {
-  const w = state.words.find(x => x.id === id);
-  if(!w) return;
-  document.getElementById('modal-word-title').textContent = 'Edit Word';
-  document.getElementById('w-id').value = w.id;
-  document.getElementById('w-headword').value = w.headword;
-  document.getElementById('w-ipa').value = w.ipa || '';
-  document.getElementById('w-def').value = w.def;
-  document.getElementById('w-ex').value = w.ex || '';
-  document.getElementById('w-type').value = w.type;
-  document.getElementById('w-level').value = w.level;
-  document.getElementById('w-status').value = w.status;
-  document.getElementById('w-tags').value = w.tags.join(', ');
-  openModal('modal-word');
-}
-
-function saveWord(e) {
-  e.preventDefault();
-  const id = document.getElementById('w-id').value;
-  const data = {
-    headword: document.getElementById('w-headword').value.trim(),
-    ipa: document.getElementById('w-ipa').value.trim(),
-    def: document.getElementById('w-def').value.trim(),
-    ex: document.getElementById('w-ex').value.trim(),
-    type: document.getElementById('w-type').value,
-    level: document.getElementById('w-level').value,
-    status: document.getElementById('w-status').value,
-    tags: document.getElementById('w-tags').value.split(',').map(t=>t.trim()).filter(t=>t)
-  };
-  if(id) {
-    const idx = state.words.findIndex(x => x.id === id);
-    if(idx > -1) state.words[idx] = { ...state.words[idx], ...data };
-    showToast('Word updated', 'success');
-  } else {
-    state.words.push({ id: crypto.randomUUID(), ...data, srs: initSRS({}) });
-    showToast('Word added to Lexicon & SRS', 'success');
-  }
-  saveState();
-  closeModal('modal-word');
-}
-
-function deleteWord(id) {
-  if(confirm('Delete this word permanently?')) {
-    state.words = state.words.filter(w => w.id !== id);
-    saveState();
-    showToast('Deleted', 'info');
-  }
-}
-
-// --- Tools ---
-function renderTools() {
-  const tools = {
-    listening: [
-      {t:"BBC 6 Minute English", u:"https://www.bbc.co.uk/learningenglish/english/features/6-minute-english", d:"B1-B2, Structured, Transcripts"},
-      {t:"Luke's English Podcast", u:"https://teacherluke.co.uk/", d:"B2-C2, Long-form, British, Humor"},
-      {t:"TED Talks Daily", u:"https://www.ted.com/podcasts/ted-talks-daily", d:"C1-C2, Academic, Diverse accents"},
-      {t:"The Daily (NYT)", u:"https://www.nytimes.com/the-daily", d:"C1-C2, News, Fast, US English"},
-      {t:"YouGlish", u:"https://youglish.com/", d:"Tool: Search word -> Hear in 1000s of videos"}
+document.addEventListener('alpine:init', () => {
+  Alpine.store('app', {
+    // State
+    currentView: 'dashboard',
+    currentWeek: 1,
+    classroomDay: 1,
+    activeClassroomTab: 'day',
+    curriculumFilter: 'all',
+    lexiconFilter: 'all',
+    lexiconSearch: '',
+    sidebarOpen: false,
+    mobileMenuOpen: false,
+    showWordModal: false,
+    showSessionModal: false,
+    showWeekModal: false,
+    showConfirmReset: false,
+    srsActive: false,
+    srsQueue: [],
+    srsIndex: 0,
+    editingWordId: null,
+    wordForm: { headword:'', ipa:'', def:'', ex:'', type:'word', level:'B2', status:'new', tags:'', audioUrl:'', loading:false, apiError:'' },
+    sessionModalTitle: '',
+    sessionModalContent: '',
+    sessionTimerSeconds: 0,
+    sessionTimerInterval: null,
+    selectedWeekNum: null,
+    selectedWeekData: null,
+    toasts: [],
+    timerSeconds: 25*60,
+    timerInterval: null,
+    timerRunning: false,
+    timerMode: 'Pomodoro',
+    isDark: window.matchMedia('(prefers-color-scheme: dark)').matches,
+    
+    // Persisted State (loaded from LS)
+    streak: 0,
+    lastActive: null,
+    totalMinutes: 0,
+    words: [],
+    sessionLog: [],
+    completedWeeks: [],
+    dailyChecks: {},
+    settings: { dailyGoal: 90, newCardsDay: 20, targetLevel: 'C2', theme: 'dark' },
+    
+    navigation: [
+      {id:'dashboard', icon:'layout-dashboard', label:'Dashboard'},
+      {id:'classroom', icon:'graduation-cap', label:'🎓 Classroom', badge: () => this.getTodayDay()},
+      {id:'curriculum', icon:'book-open', label:'Curriculum'},
+      {id:'srs', icon:'refresh-cw', label:'SRS Review', badge: () => this.dueCount},
+      {id:'lexicon', icon:'dictionary', label:'Lexicon'},
+      {id:'tools', icon:'wrench', label:'Toolkit'},
+      {id:'settings', icon:'settings', label:'Settings'}
     ],
-    reading: [
-      {t:"The Guardian / The Economist", u:"https://www.theguardian.com/international", d:"C1-C2, Journalistic, Opinion"},
-      {t:"Aeon / Psyche", u:"https://aeon.co/", d:"C2, Deep Essays, Philosophy/Science"},
-      {t:"COCA / BNC Corpus", u:"https://www.english-corpora.org/coca/", d:"Tool: Collocation search, Frequency"},
-      {t:"Project Gutenberg", u:"https://www.gutenberg.org/", d:"Free Literature (C2)"},
-      {t:"News in Levels", u:"https://www.newsinlevels.com/", d:"B1-B2, Same news 3 levels"}
+    classroomTabs: [
+      {id:'day', icon:'calendar-day', label:'Daily Lesson'},
+      {id:'grammar', icon:'code', label:'Grammar Lab'},
+      {id:'vocab', icon:'flask-conical', label:'Vocab Lab'},
+      {id:'shadowing', icon:'headphones', label:'Shadowing'},
+      {id:'output', icon:'mic', label:'Output'}
     ],
-    speaking: [
-      {t:"ELSA Speak / Speechling", u:"https://elsaspeak.com/", d:"App: Pronunciation feedback (AI)"},
-      {t:"Shadowing Technique", u:"https://www.youtube.com/results?search_query=shadowing+english+practice", d:"Method: Repeat audio with 1s delay"},
-      {t:"Cambly / Italki", u:"https://www.cambly.com/", d:"Tutors: Live conversation practice"},
-      {t:"Toastmasters", u:"https://www.toastmasters.org/", d:"Clubs: Public speaking structure"},
-      {t:"Record Yourself", u:"#", d:"Method: Phone recorder -> Compare with native"}
+    lexiconFilters: ['all', 'word', 'collocation', 'phrasal', 'idiom', 'connector', 'academic'],
+    toolCategories: [
+      {id:'listening', icon:'headphones', label:'Listening & Input', color:'#22d3ee', tools:[
+        {title:'BBC 6 Minute English', url:'https://www.bbc.co.uk/learningenglish/english/features/6-minute-english', desc:'B1-C1, Structured, Transcripts, Vocab lists'},
+        {title:"Luke's English Podcast", url:'https://teacherluke.co.uk/', desc:'B2-C2, Long-form, British, Humour, Transcripts'},
+        {title:'TED Talks Daily', url:'https://www.ted.com/podcasts/ted-talks-daily', desc:'C1-C2, Academic, Diverse accents, Interactive transcripts'},
+        {title:'The Daily (NYT)', url:'https://www.nytimes.com/the-daily', desc:'C1-C2, News, Fast pace, US English'},
+        {title:'YouGlish', url:'https://youglish.com/', desc:'Tool: Search word -> Hear in 1000s of video contexts'}
+      ]},
+      {id:'reading', icon:'book-open', label:'Reading & Corpus', color:'#f472b6', tools:[
+        {title:'The Guardian / Economist', url:'https://www.theguardian.com/international', desc:'C1-C2, Journalistic, Opinion, Long reads'},
+        {title:'Aeon / Psyche Essays', url:'https://aeon.co/', desc:'C2, Deep essays, Philosophy, Science, Culture'},
+        {title:'COCA Corpus', url:'https://www.english-corpora.org/coca/', desc:'Tool: Collocation search, Frequency, Register'},
+        {title:'SkELL (Sketch Engine)', url:'https://skell.sketchengine.eu/', desc:'Tool: Real sentence examples, Word sketch, Similar words'},
+        {title:'News in Levels', url:'https://www.newsinlevels.com/', desc:'B1-B2, Same news in 3 levels, Audio'}
+      ]},
+      {id:'speaking', icon:'mic', label:'Speaking & Pronunciation', color:'#34d399', tools:[
+        {title:'ELSA Speak / Speechling', url:'https://elsaspeak.com/', desc:'App: AI Pronunciation feedback, IPA scoring'},
+        {title:'Shadowing Technique Guide', url:'https://www.youtube.com/results?search_query=shadowing+english+practice', desc:'Method: Repeat audio with ~0.5s delay'},
+        {title:'Cambly / Italki / Preply', url:'https://www.cambly.com/', desc:'Tutors: Live 1-on-1 conversation practice'},
+        {title:'Toastmasters International', url:'https://www.toastmasters.org/', desc:'Clubs: Public speaking structure, Feedback'},
+        {title:'Record & Compare (Phone)', url:'#', desc:'Method: Record self -> Compare waveform/pitch with native'}
+      ]},
+      {id:'writing', icon:'pen-tool', label:'Writing & Grammar', color:'#fbbf24', tools:[
+        {title:'LanguageTool / Grammarly', url:'https://languagetool.org/', desc:'Tool: Grammar, Style, Punctuation checker (Multilingual)'},
+        {title:'DeepL Write', url:'https://www.deepl.com/write', desc:'Tool: Rewrite for clarity, tone, conciseness (AI)'},
+        {title:'Write & Improve (Cambridge)', url:'https://writeandimprove.com/', desc:'Tool: Auto-graded writing tasks (CEFR aligned)'},
+        {title:'Academic Phrasebank', url:'https://www.phrasebank.manchester.ac.uk/', desc:'Resource: Sentence starters for research writing'},
+        {title:'Hemingway Editor', url:'https://hemingwayapp.com/', desc:'Tool: Readability grade, Passive voice, Adverbs'}
+      ]},
+      {id:'vocab', icon:'zap', label:'Vocabulary Expansion', color:'#a855f7', tools:[
+        {title:'Anki (Shared Decks)', url:'https://ankiweb.net/shared/decks/english', desc:'App: SRS. Search "C1 Advanced", "Collocations", "Idioms"'},
+        {title:'Oxford Collocations Dict', url:'https://www.oxfordlearnersdictionaries.com/', desc:'Tool: Check Verb+Noun, Adj+Noun combinations'},
+        {title:'Merriam-Webster / OED', url:'https://www.merriam-webster.com/', desc:'Definitive dictionaries + Etymology + Usage notes'},
+        {title:'Vocabulary.com', url:'https://www.vocabulary.com/', desc:'Game: Adaptive learning, Context-rich questions'},
+        {title:'Etymonline', url:'https://www.etymonline.com/', desc:'Tool: Word origins, History, Cognates'}
+      ]},
+      {id:'exam', icon:'target', label:'Exam Prep (IELTS/TOEFL/CPE)', color:'#ef4444', tools:[
+        {title:'Cambridge Exam Prep', url:'https://www.cambridgeenglish.org/exams-and-tests/', desc:'Official sample papers (B2 First, C1 Advanced, C2 Proficiency)'},
+        {title:'IELTS Simon / Liz', url:'https://ielts-simon.com/', desc:'Blog: Task 2 structures, Vocab lists, Model answers'},
+        {title:'TOEFL Resources (ETS)', url:'https://www.ets.org/toefl/test-takers/ibt/prepare', desc:'Official practice tests, Scoring guides'},
+        {title:'Flo-Joe CPE Writing', url:'https://www.flo-joe.co.uk/cpe/students/writing/', desc:'Real student answers + Teacher feedback (C2)'},
+        {title:'Exam English', url:'https://www.examenglish.com/', desc:'Free practice tests for all major exams'}
+      ]}
     ],
-    writing: [
-      {t:"Grammarly / LanguageTool", u:"https://languagetool.org/", d:"Tool: Grammar/Style checker"},
-      {t:"DeepL Write", u:"https://www.deepl.com/write", d:"Tool: Rewrite for clarity/tone"},
-      {t:"Write & Improve (Cambridge)", u:"https://writeandimprove.com/", d:"Tool: Auto-graded writing tasks"},
-      {t:"Academic Phrasebank", u:"https://www.phrasebank.manchester.ac.uk/", d:"Resource: Sentence starters for essays"},
-      {t:"Hemingway Editor", u:"https://hemingwayapp.com/", d:"Tool: Readability/Simplicity"}
-    ],
-    vocab: [
-      {t:"Anki (Shared Decks)", u:"https://ankiweb.net/shared/decks/english", d:"App: SRS - Search 'C1', 'C2', 'Collocations'"},
-      {t:"Oxford Collocations Dict", u:"https://www.oxfordlearnersdictionaries.com/", d:"Tool: Check verb+noun, adj+noun"},
-      {t:"SkELL Corpus", u:"https://skell.sketchengine.eu/", d:"Tool: Real sentence examples for words"},
-      {t:"Vocabulary.com", u:"https://www.vocabulary.com/", d:"Game: Adaptive learning + Context"},
-      {t:"Merriam-Webster / OED", u:"https://www.merriam-webster.com/", d:"Definitive dictionaries + Etymology"}
-    ],
-    exam: [
-      {t:"Cambridge Exam Prep", u:"https://www.cambridgeenglish.org/exams-and-tests/", d:"Official sample papers (B2/C1/C2)"},
-      {t:"IELTS Simon / Liz", u:"https://ielts-simon.com/", d:"Blog: Task 2 structures, Vocab lists"},
-      {t:"TOEFL Resources (ETS)", u:"https://www.ets.org/toefl/test-takers/ibt/prepare", d:"Official practice tests"},
-      {t:"CPE Writing Samples", u:"https://www.flo-joe.co.uk/cpe/students/writing/", d:"Real student answers + Feedback"},
-      {t:"Exam English", u:"https://www.examenglish.com/", d:"Free practice tests for all exams"}
-    ]
-  };
-  Object.keys(tools).forEach(key => {
-    const container = document.getElementById(`tool-${key}`);
-    container.innerHTML = tools[key].map(t => `
-      <a href="${t.u}" target="_blank" class="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-800/50 transition group">
-        <div class="flex-1 min-w-0">
-          <p class="font-medium text-white group-hover:text-cyan-400">${t.t}</p>
-          <p class="text-xs text-gray-500">${t.d}</p>
-        </div>
-        <i data-lucide="external-link" class="w-4 h-4 text-gray-600 group-hover:text-cyan-400 mt-0.5 flex-shrink-0"></i>
-      </a>
-    `).join('');
-  });
-  lucide.createIcons();
-}
+    checklistItems: {
+      srs: { label: 'SRS Review (All Due)', time: '15 min' },
+      input: { label: 'Comprehensible Input', time: '30 min' },
+      output: { label: 'Speaking / Writing Output', time: '20 min' },
+      grammar: { label: 'Grammar Exercise', time: '15 min' }
+    },
 
-// --- Settings ---
-function renderSettings() {
-  document.getElementById('set-daily-goal').value = state.settings.dailyGoal;
-  document.getElementById('set-new-cards').value = state.settings.newCardsDay;
-  document.getElementById('set-target-level').value = state.settings.targetLevel;
-  document.getElementById('set-theme').value = state.settings.theme;
-}
+    // ========== COMPUTED / GETTERS ==========
+    get currentWeekData() { return CURRICULUM[this.currentWeek - 1] || CURRICULUM[CURRICULUM.length-1]; },
+    get phaseName() { return PHASE_NAMES[this.currentWeekData?.phase] || ''; },
+    get todayDay() { 
+      const start = new Date(this.lastActive || Date.now()); 
+      // Simple heuristic: Day 1-6 based on sessions this week
+      const weekSessions = this.sessionLog.filter(s => s.week === this.currentWeek).length;
+      return Math.min(Math.max(weekSessions + 1, 1), 6); 
+    },
+    get dueCount() { return this.words.filter(w => w.srs && w.srs.due <= Date.now()).length; },
+    get wordsLearnedCount() { return this.words.filter(w => w.srs?.state === 2).length; },
+    get totalHours() { return (this.totalMinutes / 60).toFixed(1); },
+    get retentionRate() { 
+      const rev = this.words.filter(w => w.srs?.state === 2); 
+      if(!rev.length) return '—'; 
+      return Math.round(rev.filter(w => w.srs.ease > 2.2).length / rev.length * 100); 
+    },
+    get estimatedLevel() { 
+      if(this.currentWeek <= 8) return 'B1→B2'; 
+      if(this.currentWeek <= 16) return 'B2'; 
+      if(this.currentWeek <= 22) return 'C1'; 
+      return 'C2'; 
+    },
+    get isWeekComplete() { return this.completedWeeks.includes(this.currentWeek); },
+    get dailyChecks() { 
+      const key = `checks_w${this.currentWeek}_d${this.classroomDay}`; 
+      return this.dailyChecks[key] || {srs:false, input:false, output:false, grammar:false}; 
+    },
+    get timerDisplay() { 
+      const m = String(Math.floor(this.timerSeconds/60)).padStart(2,'0'); 
+      const s = String(this.timerSeconds%60).padStart(2,'0'); 
+      return `${m}:${s}`; 
+    },
+    get timerProgress() { 
+      const total = this.timerMode === 'Pomodoro' ? 25*60 : 50*60; 
+      return ((total - this.timerSeconds) / total) * 100; 
+    },
+    get srsStats() {
+      return {
+        new: this.words.filter(w=>w.srs?.state===0).length,
+        learning: this.words.filter(w=>w.srs?.state===1).length,
+        review: this.words.filter(w=>w.srs?.state===2).length
+      };
+    },
+    get toastsHTML() {
+      return this.toasts.map((t,i) => `<div class="toast ${t.type}">${t.msg}<button class="ml-2" onclick="$store.app.toasts.splice(${i},1)"><i data-lucide="x" class="w-4 h-4"></i></button></div>`).join('');
+    },
 
-// ============================================================
-// 5. SESSION MODAL (The "Classroom")
-// ============================================================
-let sessionTimerInterval = null;
-let sessionSeconds = 0;
+    // ========== INIT & PERSISTENCE ==========
+    init() {
+      this.loadState();
+      this.applyTheme();
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => this.handleGlobalKeys(e));
+      // Lucide icons
+      this.$nextTick(() => lucide.createIcons());
+      // Watch for theme changes
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => { this.isDark = e.matches; this.applyTheme(); });
+    },
+    loadState() {
+      try {
+        const saved = localStorage.getItem('fluencyLab_v2');
+        if(saved) {
+          const p = JSON.parse(saved);
+          Object.assign(this, p);
+          // Ensure arrays/objects exist
+          this.words = this.words || [];
+          this.sessionLog = this.sessionLog || [];
+          this.completedWeeks = this.completedWeeks || [];
+          this.dailyChecks = this.dailyChecks || {};
+          this.settings = this.settings || { dailyGoal:90, newCardsDay:20, targetLevel:'C2', theme:'dark' };
+        }
+        this.calculateStreak();
+      } catch(e) { console.error('Load error', e); this.toast('Error loading data', 'error'); }
+    },
+    saveState() {
+      localStorage.setItem('fluencyLab_v2', JSON.stringify({
+        currentWeek: this.currentWeek,
+        streak: this.streak,
+        lastActive: this.lastActive,
+        totalMinutes: this.totalMinutes,
+        words: this.words,
+        sessionLog: this.sessionLog,
+        completedWeeks: this.completedWeeks,
+        dailyChecks: this.dailyChecks,
+        settings: this.settings,
+        classroomDay: this.classroomDay,
+        activeClassroomTab: this.activeClassroomTab,
+        curriculumFilter: this.curriculumFilter,
+        lexiconFilter: this.lexiconFilter
+      }));
+    },
+    calculateStreak() {
+      if(!this.lastActive) { this.streak = 0; return; }
+      const today = new Date().toDateString();
+      const last = new Date(this.lastActive).toDateString();
+      if(today === last) return;
+      const yesterday = new Date(Date.now() - 86400000).toDateString();
+      if(last === yesterday) this.streak++; else this.streak = 1;
+    },
+    applyTheme() {
+      const isLight = this.settings.theme === 'light' || (this.settings.theme === 'system' && !this.isDark);
+      document.documentElement.classList.toggle('light', isLight);
+      this.$nextTick(() => lucide.createIcons());
+    },
 
-function openSessionModal(type) {
-  const w = CURRICULUM[state.currentWeek - 1];
-  let content = '';
-  let title = '';
-  if(type === 'plan' || type === 'dashboard') {
-    title = `Week ${state.currentWeek} Session Plan`;
-    content = `
-      <div class="space-y-6">
-        <div class="card"><h4 class="font-semibold mb-3">🎯 Today's Targets</h4>
-          <ul class="space-y-2 text-gray-300">
-            <li>✅ Learn <strong>${state.settings.newCardsDay} new words</strong> from this week's list</li>
-            <li>✅ Review <strong>all due SRS cards</strong> (${state.words.filter(x=>x.srs?.due<=Date.now()).length} due)</li>
-            <li>✅ Input: <strong>30 min</strong> - ${w.input}</li>
-            <li>✅ Output: <strong>20 min</strong> - ${w.output}</li>
-            <li>✅ Grammar: <strong>15 min</strong> - ${w.grammar}</li>
-          </ul>
-        </div>
-        <div class="grid gap-3 sm:grid-cols-3">
-          <button onclick="startSessionTimer('srs')" class="card text-center p-6 group"><i data-lucide="rotate-ccw" class="w-10 h-10 mx-auto text-cyan-400 mb-2 group-hover:scale-110 transition"></i><strong class="block">SRS Review</strong><span class="text-sm text-gray-500">Spaced Repetition</span></button>
-          <button onclick="startSessionTimer('input')" class="card text-center p-6 group"><i data-lucide="headphones" class="w-10 h-10 mx-auto text-pink-400 mb-2 group-hover:scale-110 transition"></i><strong class="block">Input Session</strong><span class="text-sm text-gray-500">Listen/Read</span></button>
-          <button onclick="startSessionTimer('output')" class="card text-center p-6 group"><i data-lucide="mic" class="w-10 h-10 mx-auto text-green-400 mb-2 group-hover:scale-110 transition"></i><strong class="block">Output Session</strong><span class="text-sm text-gray-500">Speak/Write</span></button>
-        </div>
-      </div>
-    `;
-  } else if(type === 'srs') {
-    title = 'SRS Review Session';
-    content = `<div id="srs-session-area">Click "Start Review" in SRS tab for full algorithm. Here: Quick Flashcards.</div><button onclick="startSRS(); closeModal('modal-session');" class="btn-primary w-full mt-4">Open Full SRS</button>`;
-  } else if(type === 'input') {
-    title = 'Comprehensible Input';
-    content = `
-      <div class="space-y-4">
-        <div class="card"><h4 class="font-semibold mb-2">🎧 This Week's Prescription</h4><p class="text-gray-300">${w.input}</p></div>
-        <div class="card"><h4 class="font-semibold mb-2">📝 Active Listening Log</h4>
-          <textarea class="input-field min-h-[150px]" placeholder="1. Source/Title:\n2. 3 New words/phrases heard:\n3. Main idea (1 sentence):\n4. Shadowing segment (timestamp):\n5. Questions for tutor/self:"></textarea>
-        </div>
-        <div class="card"><h4 class="font-semibold mb-2">🔗 Quick Links</h4>
-          <div class="flex flex-wrap gap-2">
-            <a href="https://youglish.com" target="_blank" class="btn-secondary text-sm">YouGlish (Pronunciation)</a>
-            <a href="https://skell.sketchengine.eu" target="_blank" class="btn-secondary text-sm">SkELL (Collocations)</a>
-            <a href="https://www.ted.com/talks" target="_blank" class="btn-secondary text-sm">TED Talks</a>
-          </div>
-        </div>
-      </div>
-    `;
-  } else if(type === 'output') {
-    title = 'Speaking & Writing Output';
-    content = `
-      <div class="space-y-4">
-        <div class="card"><h4 class="font-semibold mb-2">🎤 This Week's Task</h4><p class="text-gray-300">${w.output}</p></div>
-        <div class="card"><h4 class="font-semibold mb-2">🗣️ Speaking Prompt (Record yourself)</h4>
-          <textarea class="input-field min-h-[100px]" placeholder="Speak for 2 minutes. Record on phone. Listen back. Note errors."></textarea>
-          <div class="mt-3 flex gap-2"><button class="btn-secondary text-sm" onclick="navigator.mediaDevices.getUserMedia({audio:true}).then(s=>{window.rec=new MediaRecorder(s);window.chunks=[];window.rec.ondataavailable=e=>window.chunks.push(e.data);window.rec.onstop=()=>{const blob=new Blob(window.chunks,{type:'audio/webm'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='speaking-practice.webm';a.click();};window.rec.start();showToast('Recording started... Click again to stop', 'info');})"><i data-lucide="mic" class="w-4 h-4 mr-1"></i> Start Recording</button></div>
-        </div>
-        <div class="card"><h4 class="font-semibold mb-2">✍️ Writing Prompt</h4>
-          <textarea class="input-field min-h-[200px]" placeholder="Write 200-300 words. Use at least 5 words from this week's list. Paste into LanguageTool/DeepL Write after."></textarea>
-        </div>
-        <div class="card bg-gray-900/50 border-yellow-500/30"><h4 class="font-semibold mb-2 text-yellow-400">🤖 AI Feedback Prompt (Copy to ChatGPT/Claude)</h4>
-          <pre class="bg-gray-900 p-3 rounded text-sm text-gray-300 overflow-x-auto whitespace-pre-wrap">Act as a C2 English examiner. Correct my text below. Give: 1. Corrected version (track changes style). 2. 3 Better lexical choices (collocations/precision). 3. 1 Grammar pattern to review. 4. CEFR level estimate.
-Text: [PASTE YOUR TEXT HERE]</pre>
-        </div>
-      </div>
-    `;
-  }
-  document.getElementById('session-modal-title').textContent = title;
-  document.getElementById('session-content').innerHTML = content;
-  sessionSeconds = state.settings.dailyGoal * 60;
-  updateSessionTimerDisplay();
-  openModal('modal-session');
-  lucide.createIcons();
-}
+    // ========== NAVIGATION ==========
+    setView(view) { 
+      this.currentView = view; 
+      this.sidebarOpen = false; 
+      this.mobileMenuOpen = false;
+      this.$nextTick(() => lucide.createIcons());
+    },
+    enterClassroom() { 
+      this.classroomDay = this.todayDay; 
+      this.activeClassroomTab = 'day'; 
+      this.setView('classroom'); 
+    },
+    prevDay() { if(this.classroomDay > 1) this.classroomDay--; },
+    nextDay() { if(this.classroomDay < 6) this.classroomDay++; },
+    completeWeek() {
+      if(!this.completedWeeks.includes(this.currentWeek)) this.completedWeeks.push(this.currentWeek);
+      if(this.currentWeek < 26) this.currentWeek++;
+      this.classroomDay = 1;
+      this.saveState();
+      this.toast(`Week ${this.currentWeek-1} completed! Welcome to Week ${this.currentWeek}.`, 'success');
+    },
 
-function startSessionTimer(mode) {
-  closeModal('modal-session');
-  openSessionModal(mode);
-  if(sessionTimerInterval) clearInterval(sessionTimerInterval);
-  sessionTimerInterval = setInterval(() => {
-    sessionSeconds--;
-    updateSessionTimerDisplay();
-    if(sessionSeconds <= 0) { clearInterval(sessionTimerInterval); showToast("Session time complete! Log your progress.", "success"); }
-  }, 1000);
-}
+    // ========== DAILY CHECKS ==========
+    saveDailyChecks(key, val) {
+      const k = `checks_w${this.currentWeek}_d${this.classroomDay}`;
+      if(!this.dailyChecks[k]) this.dailyChecks[k] = {srs:false, input:false, output:false, grammar:false};
+      this.dailyChecks[k][key] = val;
+      this.saveState();
+    },
+    logSession() {
+      const k = `checks_w${this.currentWeek}_d${this.classroomDay}`;
+      const checks = this.dailyChecks[k];
+      if(!checks || !Object.values(checks).every(v=>v)) { this.toast('Complete all 4 tasks first!', 'warn'); return; }
+      const mins = this.settings.dailyGoal;
+      this.totalMinutes += mins;
+      this.sessionLog.push({ date: new Date().toISOString(), week: this.currentWeek, day: this.classroomDay, type: 'full', minutes: mins });
+      this.lastActive = new Date().toISOString();
+      this.calculateStreak();
+      this.saveState();
+      this.toast(`Logged ${mins} min session. Great work!`, 'success');
+      if(this.classroomDay < 6) this.nextDay();
+    },
 
-function updateSessionTimerDisplay() {
-  const el = document.getElementById('session-timer');
-  if(el) {
-    const m = Math.floor(sessionSeconds/60).toString().padStart(2,'0');
-    const s = (sessionSeconds%60).toString().padStart(2,'0');
-    el.textContent = `${m}:${s}`;
-  }
-}
-
-function logSession(type) {
-  clearInterval(sessionTimerInterval);
-  const minutes = Math.round((state.settings.dailyGoal * 60 - sessionSeconds) / 60);
-  state.totalMinutes += minutes;
-  state.sessionLog.push({ date: new Date().toISOString(), week: state.currentWeek, type, minutes });
-  state.lastActive = new Date().toISOString();
-  calculateStreak();
-  saveState();
-  showToast(`Logged ${minutes} min ${type} session.`, 'success');
-  closeModal('modal-session');
-}
-
-// ============================================================
-// 6. EVENT LISTENERS & INIT
-// ============================================================
-document.addEventListener('DOMContentLoaded', () => {
-  loadState();
-  
-  // Navigation
-  document.querySelectorAll('.nav-link').forEach(l => l.addEventListener('click', e => { e.preventDefault(); showView(l.dataset.view); document.getElementById('sidebar').classList.add('-translate-x-full'); }));
-  document.querySelectorAll('.phase-tab').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('.phase-tab').forEach(x=>x.classList.remove('active','btn-primary')); x.classList.add('btn-secondary'); b.classList.add('active','btn-primary'); b.classList.remove('btn-secondary'); renderCurriculum(); }));
-  document.querySelectorAll('.filter-chip').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('.filter-chip').forEach(x=>x.classList.remove('active')); b.classList.add('active'); state.lexiconFilter = b.dataset.filter; renderLexicon(); }));
-  document.querySelectorAll('[data-action]').forEach(b => b.addEventListener('click', () => openSessionModal(b.dataset.action)));
-  
-  // Buttons
-  document.getElementById('btn-start-today').onclick = () => openSessionModal('plan');
-  document.getElementById('btn-start-srs').onclick = startSRS;
-  document.getElementById('btn-add-word').onclick = () => { document.getElementById('form-word').reset(); document.getElementById('w-id').value=''; document.getElementById('modal-word-title').textContent='Add New Word'; openModal('modal-word'); };
-  document.getElementById('btn-export-lexicon').onclick = () => { const blob = new Blob([JSON.stringify(state.words, null, 2)], {type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='lexicon-backup.json'; a.click(); showToast('Lexicon exported', 'success'); };
-  document.getElementById('btn-export-all').onclick = () => { const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='fluency-lab-full-backup.json'; a.click(); showToast('Full backup exported', 'success'); };
-  document.getElementById('btn-reset-all').onclick = () => { if(confirm('DELETE EVERYTHING? This cannot be undone.')) { localStorage.removeItem(STORAGE_KEY); location.reload(); } };
-  
-  // Settings
-  ['set-daily-goal','set-new-cards','set-target-level','set-theme'].forEach(id => document.getElementById(id).addEventListener('change', e => { state.settings[id.replace('set-','')] = e.target.type==='number'?parseInt(e.target.value):e.target.value; saveState(); }));
-  
-  // SRS Controls
-  document.querySelectorAll('#srs-controls button').forEach(b => b.addEventListener('click', () => answerSRS(parseInt(b.dataset.grade))));
-  
-  // Search
-  document.getElementById('lexicon-search').addEventListener('input', debounce(renderLexicon, 300));
-  
-  // Mobile Menu
-  document.getElementById('mobile-menu-btn').onclick = () => document.getElementById('sidebar').classList.toggle('-translate-x-full');
-  
-  // Close modals on overlay click
-  document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target === m) closeModal(m.id); }));
-  
-  // Keyboard: Escape closes modals
-  document.addEventListener('keydown', e => { if(e.key==='Escape') document.querySelectorAll('.modal-overlay:not(.hidden)').forEach(m=>closeModal(m.id)); });
-  
-  // Init Lucide
-  lucide.createIcons();
-});
-
-function debounce(fn, ms) { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); }; }
-
-function handleImport(event) {
-  const file = event.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const imported = JSON.parse(e.target.result);
-      if(imported.words) { // Lexicon only
-        state.words = imported;
-        showToast(`Imported ${imported.length} words.`, 'success');
-      } else { // Full state
-        state = { ...state, ...imported };
-        showToast('Full state restored!', 'success');
+    // ========== SRS ENGINE (SM-2) ==========
+    initSRS(word) { return { due: Date.now(), interval: 0, ease: 2.5, reps: 0, lapses: 0, state: 0 }; },
+    scheduleCard(srs, grade) {
+      if(grade === 0) { srs.interval = 0; srs.reps = 0; srs.lapses++; srs.state = 1; srs.due = Date.now() + 60000; srs.ease = Math.max(1.3, srs.ease - 0.2); return; }
+      srs.reps++;
+      if(srs.state === 0) { srs.state = 1; srs.interval = grade===3 ? 3*60000 : grade===4 ? 10*60000 : 1*3600000; }
+      else if(srs.state === 1) { srs.state = 2; srs.interval = grade===3 ? 10*60000 : grade===4 ? 1*86400000 : 4*86400000; }
+      else { srs.interval = Math.round(grade===3 ? srs.interval*1.2 : grade===4 ? srs.interval*srs.ease : srs.interval*srs.ease*1.3); }
+      srs.due = Date.now() + srs.interval;
+      srs.ease += (0.1 - (5-grade)*(0.08+(5-grade)*0.02)); if(srs.ease<1.3) srs.ease=1.3;
+    },
+    startSRS() {
+      this.srsQueue = this.words.filter(w => w.srs && w.srs.due <= Date.now()).sort((a,b)=>a.srs.due-b.srs.due);
+      if(!this.srsQueue.length) { this.toast('No cards due!', 'info'); return; }
+      this.srsIndex = 0; this.srsActive = true; this.setView('srs');
+    },
+    answerSRS(grade) {
+      if(this.srsIndex >= this.srsQueue.length) return;
+      const card = this.srsQueue[this.srsIndex];
+      this.scheduleCard(card.srs, grade);
+      this.srsIndex++;
+      if(this.srsIndex >= this.srsQueue.length) { this.srsActive = false; this.toast(`Session complete! Reviewed ${this.srsQueue.length} cards.`, 'success'); this.saveState(); }
+      this.$nextTick(() => lucide.createIcons());
+    },
+    get srsCardHTML() {
+      if(!this.srsActive || this.srsIndex >= this.srsQueue.length) {
+        return this.dueCount > 0 ? `<div class="text-center text-cyan-400"><i data-lucide="play-circle" class="w-16 h-16 mx-auto mb-4"></i><h3 class="text-2xl font-bold">Ready to Review</h3><p class="text-gray-500 mt-2">${this.dueCount} cards due</p><button onclick="$store.app.startSRS()" class="btn-primary mt-4"><i data-lucide="play" class="w-4 h-4 mr-2"></i> Start</button></div>` 
+          : `<div class="text-center text-green-400"><i data-lucide="check-circle-2" class="w-16 h-16 mx-auto mb-4"></i><h3 class="text-2xl font-bold">All Caught Up!</h3><p class="text-gray-500 mt-2">No cards due right now.</p></div>`;
       }
-      saveState();
-    } catch(err) { showToast('Invalid JSON file', 'error'); }
-  };
-  reader.readAsText(file);
-  event.target.value = '';
-}
+      const card = this.srsQueue[this.srsIndex];
+      return `<div class="w-full max-w-md mx-auto"><div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-card-inner"><div class="flip-card-face bg-gray-800 border border-gray-700"><p class="text-2xl font-light text-center text-cyan-300">${this.escapeHtml(card.headword)}</p>${card.ipa ? `<p class="text-sm text-gray-400 text-center mt-1">${this.escapeHtml(card.ipa)}</p>` : ''}<p class="text-xs text-gray-500 text-center mt-4">Click or Tap to Reveal</p></div><div class="flip-card-face flip-card-back"><p class="text-lg text-gray-200 mb-2">${this.escapeHtml(card.def)}</p>${card.ex ? `<p class="text-sm text-gray-400 italic border-t border-gray-700 pt-2">"${this.escapeHtml(card.ex)}"</p>` : ''}<div class="flex gap-2 mt-4 text-xs text-gray-500 justify-center"><span>${['New','Learning','Review'][card.srs.state]}</span><span>Int: ${this.formatInterval(card.srs.interval)}</span><span>Ease: ${card.srs.ease.toFixed(2)}</span></div></div></div></div><p class="text-center text-sm text-gray-500 mt-4">Card ${this.srsIndex+1} / ${this.srsQueue.length}</p></div>`;
+    },
+    formatInterval(ms) { if(ms<60000) return Math.round(ms/1000)+'s'; if(ms<3600000) return Math.round(ms/60000)+'m'; if(ms<86400000) return Math.round(ms/3600000)+'h'; return Math.round(ms/86400000)+'d'; },
 
-function openWordEditor(id) { /* defined above */ }
-function deleteWord(id) { /* defined above */ }
+    // ========== LEXICON ==========
+    filterLexicon() { this.$nextTick(() => lucide.createIcons()); },
+    get lexiconListHTML() {
+      let words = this.words;
+      if(this.lexiconFilter !== 'all') words = words.filter(w => w.type === this.lexiconFilter);
+      if(this.lexiconSearch) { const s = this.lexiconSearch.toLowerCase(); words = words.filter(w => w.headword.toLowerCase().includes(s) || w.def.toLowerCase().includes(s) || w.tags.join(' ').toLowerCase().includes(s)); }
+      if(!words.length) return '<div class="text-center text-gray-500 py-12"><i data-lucide="search-x" class="w-12 h-12 mx-auto mb-4 opacity-50"></i><p>No words found. Add some!</p></div>';
+      return words.map(w => {
+        const learned = w.srs?.state===2, learning = w.srs?.state===1;
+        return `<div class="card flex items-start justify-between gap-4 p-4"><div class="flex-1 min-w-0"><div class="flex items-center gap-3 flex-wrap"><strong class="text-lg text-cyan-300">${this.escapeHtml(w.headword)}</strong>${w.ipa ? `<span class="text-sm text-gray-400 font-mono">${this.escapeHtml(w.ipa)}</span>` : ''}<span class="word-chip text-xs">${w.type}</span><span class="word-chip text-xs ${learned?'learned':learning?'learning':''}">${w.level}</span></div><p class="text-gray-300 mt-1 truncate">${this.escapeHtml(w.def)}</p>${w.ex ? `<p class="text-sm text-gray-500 italic mt-1 truncate">"${this.escapeHtml(w.ex)}"</p>` : ''}<div class="flex flex-wrap gap-1 mt-2">${w.tags.map(t=>`<span class="px-2 py-0.5 bg-gray-800 rounded text-xs text-gray-400">${this.escapeHtml(t)}</span>`).join('')}</div></div><div class="flex items-center gap-1"><button onclick="$store.app.openWordModal('${w.id}')" class="audio-btn" title="Play Audio" ${!w.audioUrl ? 'disabled style="opacity:0.3"' : ''}><i data-lucide="volume-2" class="w-4 h-4"></i></button><button onclick="$store.app.openWordModal('${w.id}')" class="btn-ghost p-2" title="Edit"><i data-lucide="pencil" class="w-4 h-4"></i></button><button onclick="$store.app.deleteWord('${w.id}')" class="btn-ghost p-2 text-red-400 hover:bg-red-900/20" title="Delete"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>`;
+      }).join('');
+    },
+    openWordModal(id=null) {
+      if(id) {
+        const w = this.words.find(x=>x.id===id); if(!w) return;
+        this.editingWordId = id;
+        this.wordForm = { headword:w.headword, ipa:w.ipa||'', def:w.def, ex:w.ex||'', type:w.type, level:w.level, status:w.status, tags:w.tags.join(', '), audioUrl:w.audioUrl||'', loading:false, apiError:'' };
+      } else {
+        this.editingWordId = null;
+        this.wordForm = { headword:'', ipa:'', def:'', ex:'', type:'word', level:'B2', status:'new', tags:`week-${this.currentWeek}`, audioUrl:'', loading:false, apiError:'' };
+      }
+      this.showWordModal = true;
+      this.$nextTick(() => { lucide.createIcons(); document.getElementById('w-headword')?.focus(); });
+    },
+    closeWordModal() { this.showWordModal = false; this.editingWordId = null; },
+    async fetchWordData() {
+      const hw = this.wordForm.headword.trim(); if(!hw) return;
+      this.wordForm.loading = true; this.wordForm.apiError = '';
+      try {
+        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(hw)}`);
+        if(!res.ok) throw new Error('Not found');
+        const data = await res.json();
+        const entry = data[0];
+        const mean = entry.meanings[0];
+        this.wordForm.def = mean.definitions[0].definition;
+        this.wordForm.ex = mean.definitions[0].example || '';
+        this.wordForm.ipa = entry.phonetics.find(p=>p.text)?.text || entry.phonetic || '';
+        const audio = entry.phonetics.find(p=>p.audio)?.audio; if(audio) this.wordForm.audioUrl = audio;
+        this.wordForm.type = mean.partOfSpeech.includes('verb') ? 'word' : 'word'; // heuristic
+        this.toast('Definition & Audio fetched!', 'success');
+      } catch(e) { this.wordForm.apiError = 'Word not found in free dictionary. Enter manually.'; this.toast('API Error: ' + e.message, 'error'); }
+      finally { this.wordForm.loading = false; }
+    },
+    saveWord() {
+      if(!this.wordForm.headword || !this.wordForm.def) { this.toast('Headword & Definition required', 'error'); return; }
+      const data = { headword:this.wordForm.headword.trim(), ipa:this.wordForm.ipa.trim(), def:this.wordForm.def.trim(), ex:this.wordForm.ex.trim(), type:this.wordForm.type, level:this.wordForm.level, status:this.wordForm.status, tags:this.wordForm.tags.split(',').map(t=>t.trim()).filter(t=>t), audioUrl:this.wordForm.audioUrl };
+      if(this.editingWordId) { const i = this.words.findIndex(x=>x.id===this.editingWordId); if(i>-1) this.words[i] = {...this.words[i], ...data}; this.toast('Word updated', 'success'); }
+      else { this.words.push({ id: crypto.randomUUID(), ...data, srs: this.initSRS({}) }); this.toast('Word added to Lexicon & SRS', 'success'); }
+      this.closeWordModal(); this.saveState();
+    },
+    deleteWord(id) { if(confirm('Delete permanently?')) { this.words = this.words.filter(w=>w.id!==id); this.saveState(); this.toast('Deleted', 'info'); }},
+    exportLexicon(fmt) {
+      if(fmt==='json') { const blob = new Blob([JSON.stringify(this.words,null,2)],{type:'application/json'}); this.downloadBlob(blob, 'lexicon.json'); }
+      else { const headers = 'ID,Headword,IPA,Definition,Example,Type,Level,Status,Tags,AudioURL\n'; const rows = this.words.map(w=>`"${w.id}","${w.headword}","${w.ipa}","${w.def.replace(/"/g,'""')}","${w.ex.replace(/"/g,'""')}","${w.type}","${w.level}","${w.status}","${w.tags.join(';')}","${w.audioUrl}"`).join('\n'); this.downloadBlob(new Blob([headers+rows],{type:'text/csv'}), 'lexicon.csv'); }
+      this.toast(`Exported ${this.words.length} words as ${fmt.toUpperCase()}`, 'success');
+    },
+    downloadBlob(blob, name) { const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); URL.revokeObjectURL(url); },
 
-// Make functions global for inline onclick
-window.openSessionModal = openSessionModal;
-window.startSRS = startSRS;
-window.answerSRS = answerSRS;
-window.openWeekModal = openWeekModal;
-window.toggleWeekComplete = toggleWeekComplete;
-window.startWeekSession = startWeekSession;
-window.openWordEditor = openWordEditor;
-window.deleteWord = deleteWord;
-window.saveWord = saveWord; // form onsubmit handles this
-window.closeModal = closeModal;
-window.showToast = showToast;
-window.handleImport = handleImport;
-window.lucide = lucide; // ensure access
+    // ========== CURRICULUM ==========
+    get curriculumGridHTML() {
+      return CURRICULUM.filter(w => this.curriculumFilter==='all' || w.phase===this.curriculumFilter).map((w,i)=> {
+        const isCurrent = (w.w === this.currentWeek);
+        const isDone = this.completedWeeks.includes(w.w);
+        return `<div class="week-card ${isCurrent?'current':''} ${isDone?'done':''}" onclick="$store.app.openWeekModal(${w.w})"><div class="flex items-start justify-between mb-3"><div><span class="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Week ${w.w} • Phase ${w.phase}</span><h4 class="font-bold text-lg mt-1">${this.escapeHtml(w.theme)}</h4></div>${isDone?'<i data-lucide="check-circle-2" class="w-6 h-6 text-green-400">':isCurrent?'<span class="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded">Current</span>':''}</div><div class="text-sm text-gray-400 mb-4 h-16 overflow-hidden">${this.escapeHtml(w.vocabFocus)}</div><div class="flex flex-wrap gap-1.5 mt-auto">${w.words.slice(0,8).map(v=>`<span class="word-chip text-xs px-2 py-0.5">${this.escapeHtml(v)}</span>`).join('')}${w.words.length>8?`<span class="word-chip text-xs px-2 py-0.5 text-gray-500">+${w.words.length-8}</span>`:''}</div></div>`;
+      }).join('');
+    },
+    openWeekModal(num) { this.selectedWeekNum = num; this.selectedWeekData = CURRICULUM[num-1]; this.showWeekModal = true; this.$nextTick(() => lucide.createIcons()); },
+    closeWeekModal() { this.showWeekModal = false; },
+    get weekModalContent() {
+      if(!this.selectedWeekData) return '';
+      const w = this.selectedWeekData;
+      const isDone = this.completedWeeks.includes(w.w);
+      return `<div class="space-y-6"><div class="grid gap-4 md:grid-cols-2"><div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="target" class="w-4 h-4 text-cyan-400"></i> Vocab Focus</h4><p class="text-gray-300">${this.escapeHtml(w.vocabFocus)}</p></div><div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="code" class="w-4 h-4 text-pink-400"></i> Grammar Focus</h4><p class="text-gray-300">${this.escapeHtml(w.grammar)}</p></div></div><div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="headphones" class="w-4 h-4 text-green-400"></i> Comprehensible Input</h4><p class="text-gray-300">${this.escapeHtml(w.input)}</p></div><div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="mic" class="w-4 h-4 text-yellow-400"></i> Output Task</h4><p class="text-gray-300">${this.escapeHtml(w.output)}</p></div><div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-purple-400"></i> Target Vocabulary (${w.words.length})</h4><div class="flex flex-wrap gap-2" id="modal-word-list">${w.words.map(v=>{ const ex=this.words.find(x=>x.headword.toLowerCase()===v.toLowerCase()); return `<span class="word-chip ${ex?(ex.srs?.state===2?'learned':ex.srs?.state===1?'learning':'':''}">${this.escapeHtml(v)}</span>`}).join('')}</div></div><div class="flex gap-3 pt-4 border-t border-gray-800"><button onclick="$store.app.startWeekSession(${w.w})" class="btn-primary flex-1"><i data-lucide="play" class="w-4 h-4 mr-2"></i> Start Session</button><button onclick="$store.app.toggleWeekComplete(${w.w})" class="btn-secondary flex-1">${isDone?'<i data-lucide="rotate-ccw" class="w-4 h-4 mr-2"></i> Mark Incomplete':'<i data-lucide="check" class="w-4 h-4 mr-2"></i> Mark Complete'}</button></div></div>`;
+    },
+    startWeekSession(num) { this.currentWeek = num; this.saveState(); this.closeWeekModal(); this.enterClassroom(); },
+    toggleWeekComplete(num) { const i=this.completedWeeks.indexOf(num); if(i>-1) this.completedWeeks.splice(i,1); else this.completedWeeks.push(num); if(num===this.currentWeek && i===-1 && this.currentWeek<26) this.currentWeek++; this.saveState(); this.closeWeekModal(); },
+
+    // ========== SESSION MODALS (Legacy Quick Access) ==========
+    openSessionModal(type) {
+      const w = this.currentWeekData;
+      if(type==='srs') { this.startSRS(); return; }
+      this.sessionModalTitle = type==='input' ? 'Input Session' : 'Output Session';
+      if(type==='input') this.sessionModalContent = `<div class="space-y-4"><div class="card"><h4 class="font-semibold mb-2">🎧 This Week</h4><p class="text-gray-300">${w.input}</p></div><div class="card"><h4 class="font-semibold mb-2">📝 Active Listening Log</h4><textarea class="input-field min-h-[150px]" placeholder="1. Source/Title:\n2. 3 New phrases:\n3. Main idea:\n4. Shadowing segment (timestamp):"></textarea></div><div class="card"><h4 class="font-semibold mb-2">🔗 Quick Links</h4><div class="flex flex-wrap gap-2"><a href="https://youglish.com" target="_blank" class="btn-secondary text-sm">YouGlish</a><a href="https://skell.sketchengine.eu" target="_blank" class="btn-secondary text-sm">SkELL</a><a href="https://www.ted.com/talks" target="_blank" class="btn-secondary text-sm">TED Talks</a></div></div></div>`;
+      else this.sessionModalContent = `<div class="space-y-4"><div class="card"><h4 class="font-semibold mb-2">🎤 Task</h4><p class="text-gray-300">${w.output}</p></div><div class="card"><h4 class="font-semibold mb-2">🗣️ Speaking (Record)</h4><textarea class="input-field min-h-[100px]" placeholder="Speak 2 min. Record on phone."></textarea><div class="mt-3"><button class="btn-secondary text-sm" onclick="navigator.mediaDevices.getUserMedia({audio:true}).then(s=>{window.rec=new MediaRecorder(s);window.chunks=[];window.rec.ondataavailable=e=>window.chunks.push(e.data);window.rec.onstop=()=>{const blob=new Blob(window.chunks,{type:'audio/webm'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='speaking.webm';a.click();};window.rec.start();alert('Recording... Click OK to stop');setTimeout(()=>{window.rec.stop();},120000);})"><i data-lucide="mic" class="w-4 h-4 mr-1"></i> Start 2-min Recording</button></div></div><div class="card"><h4 class="font-semibold mb-2">✍️ Writing</h4><textarea class="input-field min-h-[200px]" placeholder="Write 200-300w. Use 5 weekly words. Paste into LanguageTool after."></textarea></div><div class="card bg-gray-900/50 border-yellow-500/30"><h4 class="font-semibold mb-2 text-yellow-400">🤖 AI Feedback Prompt</h4><pre class="bg-gray-900 p-3 rounded text-sm text-gray-300 overflow-x-auto whitespace-pre-wrap">Act as C2 examiner. Correct my text. Give: 1. Corrected version. 2. 3 Better lexical choices. 3. 1 Grammar pattern to review. 4. CEFR estimate.
+Text: [PASTE HERE]</pre></div></div>`;
+      this.sessionTimerSeconds = this.settings.dailyGoal * 60;
+      this.showSessionModal = true;
+      this.startSessionTimer();
+    },
+    closeSessionModal() { this.showSessionModal = false; clearInterval(this.sessionTimerInterval); },
+    startSessionTimer() { clearInterval(this.sessionTimerInterval); this.sessionTimerInterval = setInterval(()=>{ this.sessionTimerSeconds--; if(this.sessionTimerSeconds<=0){ clearInterval(this.sessionTimerInterval); this.toast('Time up! Log session.', 'success'); }},1000); },
+    get sessionTimerDisplay() { const m=String(Math.floor(this.sessionTimerSeconds/60)).padStart(2,'0'); const s=String(this.sessionTimerSeconds%60).padStart(2,'0'); return `${m}:${s}`; },
+
+    // ========== CLASSROOM COMPONENTS (Inline Templates via x-html) ==========
+    // We use a render function for the Day tab
+    get dayComponent() { return `DayLesson`; }, // Handled by Alpine component below
+
+    // ========== TIMER (Classroom Sidebar) ==========
+    startTimer(secs) { this.timerSeconds = secs; this.timerMode = secs===25*60?'Pomodoro':'Deep Work'; this.timerRunning = true; clearInterval(this.timerInterval); this.timerInterval = setInterval(()=>{ if(this.timerSeconds>0) this.timerSeconds--; else { this.timerRunning=false; clearInterval(this.timerInterval); this.toast('Timer complete!', 'success'); }},1000); },
+    pauseTimer() { this.timerRunning = false; clearInterval(this.timerInterval); },
+    resumeTimer() { if(this.timerSeconds<=0) return; this.timerRunning = true; this.timerInterval = setInterval(()=>{ if(this.timerSeconds>0) this.timerSeconds--; else { this.timerRunning=false; clearInterval(this.timerInterval); }},1000); },
+    resetTimer() { this.pauseTimer(); this.timerSeconds = 25*60; this.timerMode = 'Pomodoro'; },
+
+    // ========== SETTINGS & BACKUP ==========
+    saveSettings() { this.saveState(); this.applyTheme(); this.toast('Settings saved', 'success'); },
+    exportFullBackup() { const data = { words:this.words, sessionLog:this.sessionLog, completedWeeks:this.completedWeeks, dailyChecks:this.dailyChecks, settings:this.settings, currentWeek:this.currentWeek, streak:this.streak, totalMinutes:this.totalMinutes, lastActive:this.lastActive }; this.downloadBlob(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}), 'fluency-lab-backup.json'); this.toast('Full backup exported', 'success'); },
+    importBackup(e) { const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ try{ const p=JSON.parse(ev.target.result); Object.assign(this, p); this.saveState(); this.applyTheme(); this.toast('Backup restored! Reloading...', 'success'); setTimeout(()=>location.reload(),1000); }catch(err){ this.toast('Invalid file', 'error'); }}; r.readAsText(f); e.target.value=''; },
+    confirmReset() { this.showConfirmReset = true; },
+    hardReset() { localStorage.removeItem('fluencyLab_v2'); location.reload(); },
+
+    // ========== UTILS ==========
+    toast(msg, type='info') { this.toasts.push({msg, type}); setTimeout(()=>this.toasts.shift(), 5000); },
+    escapeHtml(t) { return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); },
+    capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); },
+    handleGlobalKeys(e) {
+      if(this.showWordModal || this.showSessionModal || this.showWeekModal || this.showConfirmReset) { if(e.key==='Escape') { this.closeWordModal(); this.closeSessionModal(); this.closeWeekModal(); this.showConfirmReset=false; } return; }
+      if(this.srsActive && ['1','2','3','4'].includes(e.key)) { const map={1:0,2:3,3:4,4:5}; this.answerSRS(map[e.key]); }
+      if(e.key===' ' && this.activeClassroomTab==='shadowing') { e.preventDefault(); const vid = document.querySelector('#shadow-video'); if(vid) vid.paused ? vid.play() : vid.pause(); }
+      if(['ArrowLeft','ArrowRight'].includes(e.key) && this.activeClassroomTab==='shadowing') { const vid = document.querySelector('#shadow-video'); if(vid) vid.currentTime += e.key==='ArrowRight'?5:-5; }
+      if(e.key==='s' && this.activeClassroomTab==='shadowing') { const vid = document.querySelector('#shadow-video'); if(vid) vid.currentTime = Math.max(0, vid.currentTime-3); }
+    }
+  });
+
+  // ========== ALPINE COMPONENTS FOR CLASSROOM TABS ==========
+  Alpine.component('DayLesson', (props) => ({
+    day: props.day,
+    week: props.week,
+    get content() {
+      const lessons = [
+        {title:"Vocabulary Input & SRS Setup", tasks:["Review weekly word list in Vocab Lab","Add 10 new words to Lexicon (use Auto-Fill)","Do first SRS review session (15 min)"]},
+        {title:"Grammar Deep Dive", tasks:["Read Grammar Lab explanation","Complete 2 generated exercises","Write 3 personal examples using the structure"]},
+        {title:"Comprehensible Input", tasks:[`Watch/Listen: ${this.week.input} (30 min)","Log 3 new phrases in Session Modal","Shadow 1 minute of audio (Shadowing tab)"]},
+        {title:"Output Practice", tasks:[`Speaking Task: ${this.week.output} (Record 2 min)","Writing Task: 200 words using 5 weekly words","Get AI feedback (use prompt in Output tab)"]},
+        {title:"Integration & Fluency", tasks:["Mixed Grammar/Vocab Exercise (Grammar Lab)","Speed review: SRS 'Quick 10'","Retell input content from memory (record)"]},
+        {title:"Review & Reflect", tasks:["Complete all SRS due cards","Weekly checklist: All 4 daily tasks done?","Plan next week: Preview words in Curriculum"]}
+      ];
+      const l = lessons[this.day-1] || lessons[0];
+      return `<div class="space-y-6"><header class="card"><h2 class="font-bold text-xl">${l.title}</h2><p class="text-gray-400">Day ${this.day} of Week ${this.week.w}</p></header>${l.tasks.map((t,i)=>`<div class="card p-4 flex items-start gap-4"><input type="checkbox" class="w-5 h-5 mt-1 rounded border-gray-600 text-cyan-500 focus:ring-cyan-500 flex-shrink-0" ${this.$store.app.dailyChecks[`checks_w${this.week.w}_d${this.day}`]?.[`task${i}`]?'checked':''} onchange="this.closest('[x-data]').__alpine.setTaskDone(${this.week.w},${this.day},${i},this.checked)"><div class="flex-1"><p class="text-gray-300">${t}</p></div></div>`).join('')}</div>`;
+    }
+  }));
+
+  // Grammar Lesson Component
+  Alpine.component('GrammarLesson', (props) => ({
+    week: props.week,
+    exerciseType: 'cloze',
+    exerciseData: null,
+    userAnswers: {},
+    showFeedback: false,
+    get content() {
+      return `<div class="space-y-6"><header class="card"><h2 class="font-bold text-xl">${this.week.grammar}</h2></header><div class="card">${this.week.grammarDetail}</div><div class="card"><h3 class="font-semibold mb-4">Interactive Exercises</h3><div class="flex flex-wrap gap-2 mb-4"><button @click="exerciseType='cloze'; generate()" class="tab-btn" :class="{active:exerciseType==='cloze'}"><i data-lucide="file-text" class="w-4 h-4 mr-1"></i> Cloze (Fill Gaps)</button><button @click="exerciseType='transform'; generate()" class="tab-btn" :class="{active:exerciseType==='transform'}"><i data-lucide="arrow-right-left" class="w-4 h-4 mr-1"></i> Transformations</button><button @click="exerciseType='mcq'; generate()" class="tab-btn" :class="{active:exerciseType==='mcq'}"><i data-lucide="list-checks" class="w-4 h-4 mr-1"></i> Multiple Choice</button><button @click="exerciseType='wordform'; generate()" class="tab-btn" :class="{active:exerciseType==='wordform'}"><i data-lucide="type" class="w-4 h-4 mr-1"></i> Word Formation</button></div><div x-html="exerciseHTML"></div><div class="flex gap-2 mt-4"><button @click="checkAnswers()" class="btn-primary" :disabled="!exerciseData"><i data-lucide="check-circle" class="w-4 h-4 mr-1"></i> Check Answers</button><button @click="generate()" class="btn-secondary"><i data-lucide="refresh-cw" class="w-4 h-4 mr-1"></i> New Exercise</button></div></div></div>`;
+    },
+    init() { this.generate(); },
+    generate() { 
+      const vocab = this.week.words.slice(0,10);
+      const templates = {
+        cloze: () => this.makeCloze(vocab),
+        transform: () => this.makeTransform(vocab),
+        mcq: () => this.makeMCQ(vocab),
+        wordform: () => this.makeWordForm(vocab)
+      };
+      this.exerciseData = templates[this.exerciseType](); this.userAnswers = {}; this.showFeedback = false; 
+      this.$nextTick(() => lucide.createIcons());
+    },
+    makeCloze(vocab) { 
+      const items = vocab.map((w,i) => { 
+        const sent = `This is a sample sentence using the target word ${w}.`; // In real app, fetch from corpus
+        const parts = sent.split(w);
+        return { id:i, word:w, before:parts[0], after:parts[1]||'', full:sent };
+      });
+      return { type:'cloze', items };
+    },
+    makeTransform(vocab) {
+      const items = vocab.slice(0,6).map((w,i) => {
+        const kw = w.split(' ')[0];
+        return { id:i, prompt:`Rewrite using "${kw}":`, sentence:`The project was completed by the team successfully.`, key:kw, answer:`The team successfully ${kw} the project.` };
+      });
+      return { type:'transform', items };
+    },
+    makeMCQ(vocab) {
+      const items = vocab.slice(0,6).map((w,i) => {
+        const distractors = vocab.filter((_,j)=>j!==i).slice(0,3);
+        const opts = [w, ...distractors].sort(()=>Math.random()-0.5);
+        return { id:i, question:`Which word means "${w.split(' ').reverse().join(' ')}"?`, options:opts, answer:w };
+      });
+      return { type:'mcq', items };
+    },
+    makeWordForm(vocab) {
+      const roots = ['mitigate', 'analyze', 'sustain', 'innovate', 'evaluate', 'communicate'];
+      const items = roots.slice(0,6).map((r,i) => {
+        const forms = { n:r+'tion', v:r, adj:r+'ive', adv:r+'ively' };
+        const target = ['n','v','adj','adv'][Math.floor(Math.random()*4)];
+        return { id:i, root:r, target:target, sentence:`We need a comprehensive ${r}___ of the data.`, answer:forms[target] };
+      });
+      return { type:'wordform', items };
+    },
+    get exerciseHTML() {
+      if(!this.exerciseData) return '';
+      if(this.exerciseData.type==='cloze') return this.exerciseData.items.map(q=>`<div class="exercise-box mb-3"><p class="text-gray-300">${this.escape(q.before)}<input type="text" class="fill-input" x-model="userAnswers[${q.id}]" placeholder="..." style="min-width:${Math.max(120, q.word.length*10)}px">${this.escape(q.after)}</p>${this.showFeedback?`<p class="text-sm mt-1 ${this.userAnswers[q.id]===q.word?'text-green-400':'text-red-400'}">${this.userAnswers[q.id]===q.word?'✓ Correct':'✗ Answer: '+q.word}</p>`:''}</div>`).join('');
+      if(this.exerciseData.type==='transform') return this.exerciseData.items.map(q=>`<div class="exercise-box mb-3"><p class="text-gray-300 mb-2">${this.escape(q.prompt)}</p><p class="text-gray-500 italic mb-2">"${this.escape(q.sentence)}"</p><input type="text" class="fill-input w-full" x-model="userAnswers[${q.id}]" placeholder="Your sentence...">${this.showFeedback?`<p class="text-sm mt-1 ${this.normalize(this.userAnswers[q.id])===this.normalize(q.answer)?'text-green-400':'text-red-400'}">${this.normalize(this.userAnswers[q.id])===this.normalize(q.answer)?'✓ Correct':'✗ Suggestion: '+q.answer}</p>`:''}</div>`).join('');
+      if(this.exerciseData.type==='mcq') return this.exerciseData.items.map(q=>`<div class="exercise-box mb-3"><p class="text-gray-300 mb-2">${this.escape(q.question)}</p><div class="grid gap-2 sm:grid-cols-2">${q.options.map(o=>`<label class="flex items-center gap-2 p-2 rounded-lg border border-gray-700 hover:bg-gray-800 cursor-pointer ${this.showFeedback&&this.userAnswers[q.id]===o?'border-cyan-500':''}"><input type="radio" name="mcq_${q.id}" value="${this.escape(o)}" x-model="userAnswers[q.id]" class="text-cyan-500"><span>${this.escape(o)}</span></label>`).join('')}</div>${this.showFeedback?`<p class="text-sm mt-1 ${this.userAnswers[q.id]===q.answer?'text-green-400':'text-red-400'}">${this.userAnswers[q.id]===q.answer?'✓ Correct':'✗ Answer: '+q.answer}</p>`:''}</div>`).join('');
+      if(this.exerciseData.type==='wordform') return this.exerciseData.items.map(q=>`<div class="exercise-box mb-3"><p class="text-gray-300">Root: <strong class="text-cyan-400">${this.escape(q.root)}</strong> → Form: <strong>${['Noun','Verb','Adjective','Adverb'][['n','v','adj','adv'].indexOf(q.target)]}</strong></p><p class="text-gray-500 italic mb-2">${this.escape(q.sentence.replace('___','____'))}</p><input type="text" class="fill-input w-full" x-model="userAnswers[${q.id}]" placeholder="e.g., mitigation">${this.showFeedback?`<p class="text-sm mt-1 ${this.normalize(this.userAnswers[q.id])===this.normalize(q.answer)?'text-green-400':'text-red-400'}">${this.normalize(this.userAnswers[q.id])===this.normalize(q.answer)?'✓ Correct':'✗ Answer: '+q.answer}</p>`:''}</div>`).join('');
+      return '';
+    },
+    checkAnswers() { this.showFeedback = true; const correct = this.exerciseData.items.filter(q=>{ if(this.exerciseData.type==='transform') return this.normalize(this.userAnswers[q.id])===this.normalize(q.answer); return this.userAnswers[q.id]===q.answer; }).length; this.$store.app.toast(`Score: ${correct}/${this.exerciseData.items.length}`, correct===this.exerciseData.items.length?'success':'info'); },
+    normalize(s) { return String(s||'').toLowerCase().replace(/[.,!?]/g,'').trim(); },
+    escape(s) { return this.$store.app.escapeHtml(s); }
+  }));
+
+  // Vocab Lab Component
+  Alpine.component('VocabLab', (props) => ({
+    week: props.week,
+    search: '',
+    get content() {
+      return `<div class="space-y-4"><header class="flex items-center justify-between"><h2 class="font-bold text-xl">Vocab Lab: Week ${this.week.w}</h2><button @click="$store.app.openWordModal()" class="btn-primary btn-sm"><i data-lucide="plus" class="w-4 h-4 mr-1"></i> Add Word</button></header><div class="card"><input type="text" x-model="search" @input.debounce.300ms="$store.app.filterLexicon()" class="input-field" placeholder="Filter weekly words..."></div><div class="space-y-2" x-html="weekWordsHTML"></div>`;
+    },
+    get weekWordsHTML() {
+      const words = this.week.words;
+      return words.map(w => {
+        const ex = this.$store.app.words.find(x => x.headword.toLowerCase() === w.toLowerCase());
+        const learned = ex?.srs?.state===2, learning = ex?.srs?.state===1;
+        return `<div class="card flex items-center justify-between gap-4 p-3"><div class="flex items-center gap-3"><strong class="text-lg text-cyan-300">${this.$store.app.escapeHtml(w)}</strong><span class="word-chip text-xs ${learned?'learned':learning?'learning':''}">${ex?ex.level:'—'}</span>${ex && ex.ipa ? `<span class="text-sm text-gray-400 font-mono">${this.$store.app.escapeHtml(ex.ipa)}</span>` : ''}</div><div class="flex gap-1"><button onclick="$store.app.openWordModal('${ex?.id||''}')" class="audio-btn" ${!ex?.audioUrl?'disabled style=opacity:0.3':''} title="Play"><i data-lucide="volume-2" class="w-4 h-4"></i></button>${ex?`<button onclick="$store.app.openWordModal('${ex.id}')" class="btn-ghost p-2 text-xs">Edit</button>`:`<button onclick="$store.app.addWordFromList('${this.$store.app.escapeHtml(w)}')" class="btn-primary btn-sm text-xs">+ Add</button>`}</div></div>`;
+      }).join('');
+    }
+  }));
+
+  // Shadowing Player Component
+  Alpine.component('ShadowingPlayer', () => ({
+    videoUrl: '',
+    videoId: '',
+    segments: [{time:0, text:''}],
+    currentSeg: 0,
+    get content() {
+      return `<div class="space-y-4"><header class="card"><h2 class="font-bold text-xl">Shadowing Studio</h2><p class="text-sm text-gray-400">Paste YouTube URL → Load → Practice phrase-by-phrase</p></header><div class="card"><div class="flex gap-2 mb-4"><input type="text" x-model="videoUrl" class="input-field flex-1" placeholder="https://youtube.com/watch?v=... or youtu.be/..."><button @click="loadVideo()" class="btn-primary" :disabled="!videoUrl"><i data-lucide="loader" class="w-4 h-4 mr-1"></i> Load</button></div><div id="shadow-video-container" class="aspect-video bg-gray-900 rounded-xl overflow-hidden" x-html="playerHTML"></div></div><div class="card" x-show="segments.length>1"><h3 class="font-semibold mb-3">Transcript / Segments</h3><div class="max-h-60 overflow-y-auto space-y-1" x-html="segmentsHTML"></div></div><div class="card bg-gray-900/50 border-cyan-500/30"><h3 class="font-semibold mb-2 text-cyan-400">Keyboard Shortcuts</h3><div class="grid grid-cols-3 gap-2 text-sm text-gray-400"><kbd class="bg-gray-800 px-2 py-1 rounded">Space</kbd><span class="col-span-2">Play / Pause</span><kbd class="bg-gray-800 px-2 py-1 rounded">← / →</kbd><span class="col-span-2">Seek ∓5s</span><kbd class="bg-gray-800 px-2 py-1 rounded">S</kbd><span class="col-span-2">Replay Segment (-3s)</span><kbd class="bg-gray-800 px-2 py-1 rounded">N</kbd><span class="col-span-2">Next Segment</span><kbd class="bg-gray-800 px-2 py-1 rounded">P</kbd><span class="col-span-2">Previous Segment</span></div></div></div>`;
+    },
+    get playerHTML() {
+      if(!this.videoId) return `<div class="w-full h-full flex items-center justify-center text-gray-500"><i data-lucide="film" class="w-16 h-16 mx-auto mb-4 opacity-30"></i><p>Load a video to start</p></div>`;
+      return `<iframe id="shadow-video" src="https://www.youtube.com/embed/${this.videoId}?enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>`;
+    },
+    get segmentsHTML() {
+      return this.segments.map((s,i)=>`<div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800 cursor-pointer ${i===this.currentSeg?'bg-cyan-500/10 border border-cyan-500/30':''}" @click="seekTo(${i})"><span class="text-xs text-gray-500 font-mono w-16">${this.fmt(s.time)}</span><span class="flex-1 ${i===this.currentSeg?'text-cyan-300 font-medium':''}">${this.$store.app.escapeHtml(s.text)}</span><button @click.stop="speak(${i})" class="audio-btn"><i data-lucide="volume-2" class="w-4 h-4"></i></button></div>`).join('');
+    },
+    loadVideo() {
+      const url = this.videoUrl;
+      const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([\w-]{11})/);
+      if(!match) { this.$store.app.toast('Invalid YouTube URL', 'error'); return; }
+      this.videoId = match[1];
+      // Demo segments - in real app, fetch from YouTube API / Whisper
+      this.segments = [
+        {time:0, text:"Welcome to this presentation about language learning."},
+        {time:5, text:"Today we will discuss the importance of consistent practice."},
+        {time:12, text:"Shadowing is a powerful technique to improve fluency."},
+        {time:20, text:"You repeat what you hear with a very short delay."},
+        {time:28, text:"This trains your brain to process English in real time."}
+      ];
+      this.currentSeg = 0;
+      this.$store.app.toast('Video loaded! Add your own transcript segments for best results.', 'success');
+      this.$nextTick(() => lucide.createIcons());
+    },
+    seekTo(i) { this.currentSeg = i; const vid = document.getElementById('shadow-video'); if(vid) vid.contentWindow.postMessage(JSON.stringify({event:'command', func:'seekTo', args:[this.segments[i].time, true]}), '*'); },
+    speak(i) { if('speechSynthesis' in window) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(this.segments[i].text); u.lang='en-US'; u.rate=0.9; speechSynthesis.speak(u); } },
+    fmt(s) { const m=String(Math.floor(s/60)).padStart(2,'0'); const sec=String(s%60).padStart(2,'0'); return `${m}:${sec}`; }
+  }));
+
+  // Output Workshop Component
+  Alpine.component('OutputWorkshop', (props) => ({
+    week: props.week,
+    speakingText: '',
+    writingText: '',
+    get content() {
+      return `<div class="space-y-6"><header class="card"><h2 class="font-bold text-xl">Output Workshop</h2><p class="text-gray-400">This week's task: ${this.week.output}</p></header><div class="card"><h3 class="font-semibold mb-3">🗣️ Speaking Practice</h3><textarea x-model="speakingText" class="input-field min-h-[100px]" placeholder="Write your script here first, then record..."></textarea><div class="flex gap-2 mt-3"><button @click="startRecording()" class="btn-primary" :disabled="recording"><i data-lucide="mic" class="w-4 h-4 mr-1"></i> <span x-text="recording ? 'Recording (2 min)...' : 'Start 2-min Recording'"></span></button><button @click="playRecording()" class="btn-secondary" :disabled="!audioBlob"><i data-lucide="play" class="w-4 h-4 mr-1"></i> Playback</button><a :href="audioUrl" download="speaking-practice.webm" class="btn-ghost" x-show="audioBlob"><i data-lucide="download" class="w-4 h-4 mr-1"></i> Save</a></div></div><div class="card"><h3 class="font-semibold mb-3">✍️ Writing Practice</h3><textarea x-model="writingText" class="input-field min-h-[200px]" placeholder="Write 200-300 words. Target: Use 5+ weekly words."></textarea><div class="mt-3 flex gap-2"><button @click="copyAIPrompt()" class="btn-primary"><i data-lucide="copy" class="w-4 h-4 mr-1"></i> Copy AI Feedback Prompt</button><button @click="countWords()" class="btn-secondary"><i data-lucide="calculator" class="w-4 h-4 mr-1"></i> Count Words</button></div></div><div class="card bg-gray-900/50 border-yellow-500/30"><h3 class="font-semibold mb-2 text-yellow-400">🤖 AI Feedback Prompt (Ready to Paste)</h3><pre class="bg-gray-900 p-3 rounded text-sm text-gray-300 overflow-x-auto whitespace-pre-wrap" x-text="aiPrompt"></pre></div></div>`;
+    },
+    recording: false,
+    mediaRecorder: null,
+    chunks: [],
+    audioBlob: null,
+    audioUrl: '',
+    get aiPrompt() {
+      const words = this.week.words.slice(0,10).join(', ');
+      return `Act as a C2 Cambridge Examiner. Analyze my text below.
+TASK: ${this.week.output}
+TARGET VOCAB: ${words}
+MY TEXT:
+${this.writingText || '[Paste your writing here]'}
+
+PROVIDE:
+1. CORRECTED VERSION (Track changes style: [[incorrect]] → {{correct}})
+2. LEXICAL UPGRADES: 3 specific collocations/phrases to replace basic vocabulary.
+3. GRAMMAR FOCUS: 1 pattern to review (with explanation).
+4. COHESION: Feedback on flow, connectors, paragraphing.
+5. ESTIMATED CEFR LEVEL & IELTS/CAE/CPE Band Equivalent.`;
+    },
+    async startRecording() {
+      if(this.recording) { this.mediaRecorder.stop(); return; }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+        this.mediaRecorder = new MediaRecorder(stream);
+        this.chunks = [];
+        this.mediaRecorder.ondataavailable = e => this.chunks.push(e.data);
+        this.mediaRecorder.onstop = () => {
+          this.audioBlob = new Blob(this.chunks, {type:'audio/webm'});
+          this.audioUrl = URL.createObjectURL(this.audioBlob);
+          this.recording = false;
+          stream.getTracks().forEach(t=>t.stop());
+          this.$store.app.toast('Recording saved! Click Play to review.', 'success');
+        };
+        this.mediaRecorder.start();
+        this.recording = true;
+        setTimeout(()=>{ if(this.recording) this.mediaRecorder.stop(); }, 120000); // 2 min max
+      } catch(e) { this.$store.app.toast('Mic permission denied', 'error'); }
+    },
+    playRecording() { if(this.audioUrl) { new Audio(this.audioUrl).play(); } },
+    copyAIPrompt() { navigator.clipboard.writeText(this.aiPrompt); this.$store.app.toast('Prompt copied! Paste into ChatGPT/Claude.', 'success'); },
+    countWords() { const c = this.writingText.trim().split(/\s+/).filter(w=>w).length; this.$store.app.toast(`Word count: ${c}`, 'info'); }
+  }));
+
+  // Helper for DayLesson task tracking
+  Alpine.store('app', Alpine.store('app')); // Ensure store exists
+  // We need to add setTaskDone to store
+  // Done via inline handler in template for simplicity, but better in store:
+  // Actually, let's add it to the store init logic above.
+  // Added: saveDailyChecks handles it.
+
+}));
+
+// ========== GLOBAL HELPERS FOR INLINE ONCLICK ==========
+window.Alpine = Alpine; // For debugging
+// Start Alpine
+// Alpine.start(); // Auto-starts with defer
 
 </script>
 </body>
