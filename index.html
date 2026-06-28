@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>English Fluency Lab | B1→C2</title>
-<!-- Tailwind CSS via CDN (Works offline if cached, otherwise needs internet once) -->
+<!-- Tailwind CSS via CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- Lucide Icons (Inline SVG injection, no eval) -->
+<!-- Lucide Icons -->
 <script src="https://unpkg.com/lucide@latest"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -83,20 +83,18 @@
   .light .flip-card-back { background: linear-gradient(135deg, #e0e7ff 0%, #fafafa 100%); border: 1px solid #c7d2fe; }
   .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 60; display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; border-radius: 0.75rem; background: rgba(17,24,39,0.9); border: 1px solid var(--border); backdrop-filter: blur(12px); animation: fadeInUp 0.3s ease-out; }
   .toast.success { border-color: #10b981; } .toast.error { border-color: #ef4444; } .toast.warn { border-color: #fbbf24; }
-  .error-screen { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(10,14,23,0.95); backdrop-filter: blur(8px); flex-direction: column; gap: 1rem; padding: 2rem; }
-  .error-box { background: rgba(17,24,39,0.9); border: 1px solid #ef4444; border-radius: 1.5rem; padding: 2rem; max-width: 40rem; width: 100%; text-align: left; }
   .kbd { display: inline-block; padding: 0.125rem 0.5rem; background: #1f2937; border-radius: 0.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; border: 1px solid #374151; }
   .light .kbd { background: #f3f4f6; border-color: #d1d5db; }
 </style>
 </head>
 <body class="min-h-screen bg-grid flex">
 <div id="app"></div>
+<div id="modalRoot"></div>
 
-<!-- ============================================================
-     VANILLA JS APPLICATION LOGIC
-     ============================================================ -->
 <script>
-// --- 1. DATA & CONFIG ---
+// ============================================================
+// 1. DATA & CONFIG
+// ============================================================
 const CURRICULUM = [
   {w:1, phase:1, theme:"Daily Life & Work Collocations", vocabFocus:"High-frequency verb+noun collocations (make/do/take/have/get)", grammar:"Present Perfect vs Past Simple", grammarDetail:`<h4>Present Perfect vs Past Simple</h4><p><strong>Present Perfect:</strong> Life experience, recent past (just/already/yet), unfinished time. <em>I've worked here for 5 years.</em></p><p><strong>Past Simple:</strong> Finished actions at specific time. <em>I worked there in 2019.</em></p><p><strong>Triggers:</strong> PP: ever, never, just, already, yet, since, for. PS: yesterday, last week, in 2020, ago.</p>`, input:"BBC 6 Minute English: 'The daily grind'", output:"Describe your typical workday using 10 collocations. Record 2 min.", words:["carry out", "come across", "deal with", "find out", "give up", "go on", "look for", "make sure", "point out", "set up", "take place", "work out", "break down", "bring up", "cut down", "run out of", "come up with", "get along", "look forward to", "take advantage of"]},
   {w:2, phase:1, theme:"Precise Personality Adjectives", vocabFocus:"Advanced adjectives + dependent prepositions", grammar:"Relative Clauses", grammarDetail:`<h4>Relative Clauses</h4><p><strong>Defining:</strong> Essential info, no commas. <em>The colleague who sits next to me is loud.</em></p><p><strong>Non-defining:</strong> Extra info, commas. <em>My boss, who is from London, speaks 3 languages.</em></p>`, input:"English with Lucy (YouTube): 'Advanced Adjectives'", output:"Write a 150-word character sketch using 8 new adjectives.", words:["conscientious", "adaptable", "resilient", "meticulous", "pragmatic", "ambivalent", "aloof", "gregarious", "prone to", "averse to", "capable of", "dependent on", "suspicious of", "tolerant of", "obsessed with", "disillusioned with", "invaluable", "indispensable", "counterproductive", "detrimental"]},
@@ -162,7 +160,9 @@ const DAY_LESSONS = [
   {title:"Review & Reflect", tasks:["Complete all SRS due cards","Weekly checklist: All 4 daily tasks done?","Plan next week: Preview words in Curriculum"]}
 ];
 
-// --- 2. STATE MANAGEMENT ---
+// ============================================================
+// 2. STATE MANAGEMENT
+// ============================================================
 let state = {
   currentView: 'dashboard', currentWeek: 1, classroomDay: 1, activeClassroomTab: 'day',
   curriculumFilter: 'all', lexiconFilter: 'all', lexiconSearch: '',
@@ -173,32 +173,42 @@ let state = {
   sessionModalTitle: '', sessionModalContent: '', sessionTimerSeconds: 0, sessionTimerInterval: null,
   selectedWeekNum: null, selectedWeekData: null, toasts: [],
   timerSeconds: 25*60, timerInterval: null, timerRunning: false, timerMode: 'Pomodoro',
-  isDark: true, // Default, updated by settings
+  isDark: true, recordingAudioUrl: null,
   // Persisted
   streak: 0, lastActive: null, totalMinutes: 0, words: [], sessionLog: [], completedWeeks: [], dailyChecks: {},
   settings: { dailyGoal: 90, newCardsDay: 20, targetLevel: 'C2', theme: 'dark' }
 };
 
-// --- 3. UTILS ---
+// ============================================================
+// 3. UTILS
+// ============================================================
 const $ = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 const escapeHtml = (t) => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const formatInterval = (ms) => { if(ms<60000) return Math.round(ms/1000)+'s'; if(ms<3600000) return Math.round(ms/60000)+'m'; if(ms<86400000) return Math.round(ms/3600000)+'h'; return Math.round(ms/86400000)+'d'; };
 const downloadBlob = (blob, name) => { const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); URL.revokeObjectURL(url); };
+const debounce = (fn,ms)=>{let t;return(...args)=>{clearTimeout(t);t=setTimeout(()=>fn(...args),ms);};};
 
-// --- 4. PERSISTENCE ---
+// ============================================================
+// 4. PERSISTENCE
+// ============================================================
 function loadState() {
   try {
     const saved = localStorage.getItem('fluencyLab_v3');
     if(saved) {
       const p = JSON.parse(saved);
-      // Merge preserving functions/structure
       Object.keys(p).forEach(k => { if(!['navigation','classroomTabs','toolCategories','checklistItems','lexiconFilters','dayLessons'].includes(k)) state[k] = p[k]; });
     }
     state.words = state.words || []; state.sessionLog = state.sessionLog || []; state.completedWeeks = state.completedWeeks || [];
     state.dailyChecks = state.dailyChecks || {}; state.settings = state.settings || { dailyGoal:90, newCardsDay:20, targetLevel:'C2', theme:'dark' };
-    calculateStreak(); applyTheme();
+    calculateStreak(); 
+    applyTheme();
+    
+    if (!state._mediaQueryListener) {
+      state._mediaQueryListener = (e) => { if(state.settings.theme === 'system') applyTheme(); };
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', state._mediaQueryListener);
+    }
   } catch(e) { console.error('Load error', e); toast('Error loading data', 'error'); }
 }
 function saveState() {
@@ -215,10 +225,12 @@ function calculateStreak() {
 function applyTheme() {
   state.isDark = state.settings.theme === 'dark' || (state.settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.classList.toggle('light', !state.isDark);
-  render(); // Re-render to update lucide icons colors if needed
+  lucide.createIcons();
 }
 
-// --- 5. COMPUTED GETTERS ---
+// ============================================================
+// 5. COMPUTED GETTERS
+// ============================================================
 const getters = {
   currentWeekData: () => CURRICULUM[state.currentWeek - 1] || CURRICULUM[CURRICULUM.length-1],
   phaseName: () => PHASE_NAMES[getters.currentWeekData().phase] || '',
@@ -229,13 +241,16 @@ const getters = {
   retentionRate: () => { const rev = state.words.filter(w => w.srs?.state === 2); if(!rev.length) return '—'; return Math.round(rev.filter(w => w.srs.ease > 2.2).length / rev.length * 100); },
   estimatedLevel: () => { if(state.currentWeek <= 8) return 'B1→B2'; if(state.currentWeek <= 16) return 'B2'; if(state.currentWeek <= 22) return 'C1'; return 'C2'; },
   isWeekComplete: () => state.completedWeeks.includes(state.currentWeek),
-  dailyChecks: () => { const key = `checks_w${state.currentWeek}_d${state.classroomDay}`; return state.dailyChecks[key] || {srs:false, input:false, output:false, grammar:false}; },
+  dailyChecks: () => { const key = `checks_w${state.currentWeek}_d${state.classroomDay}`; return state.dailyChecks[key] || {srs:false, input:false, output:false, grammar:false,task0:false,task1:false,task2:false}; },
   timerDisplay: () => { const m = String(Math.floor(state.timerSeconds/60)).padStart(2,'0'); const s = String(state.timerSeconds%60).padStart(2,'0'); return `${m}:${s}`; },
   timerProgress: () => { const total = state.timerMode === 'Pomodoro' ? 25*60 : 50*60; return ((total - state.timerSeconds) / total) * 100; },
-  srsStats: () => ({ new: state.words.filter(w=>w.srs?.state===0).length, learning: state.words.filter(w=>w.srs?.state===1).length, review: state.words.filter(w=>w.srs?.state===2).length })
+  srsStats: () => ({ new: state.words.filter(w=>w.srs?.state===0).length, learning: state.words.filter(w=>w.srs?.state===1).length, review: state.words.filter(w=>w.srs?.state===2).length }),
+  sessionTimerDisplay: () => { const m = String(Math.floor(state.sessionTimerSeconds/60)).padStart(2,'0'); const s = String(state.sessionTimerSeconds%60).padStart(2,'0'); return `${m}:${s}`; }
 };
 
-// --- 6. RENDER ENGINE ---
+// ============================================================
+// 6. RENDER ENGINE (Main Layout + Granular Updates)
+// ============================================================
 function render() {
   const app = $('#app');
   app.innerHTML = renderLayout();
@@ -243,9 +258,24 @@ function render() {
   lucide.createIcons();
 }
 
+// Granular Render Helpers
+function renderToastsOnly() { $('#toastContainer').innerHTML = state.toasts.map((t,i)=>renderToast(t,i)).join(''); lucide.createIcons(); }
+function renderTimerOnly() { updateTimerUI(); }
+function renderClassroomOnly() { const main = $('#app').querySelector('main'); if(main) { main.innerHTML = renderClassroom(); bindEvents(); lucide.createIcons(); } }
+function renderCurriculumOnly() { const main = $('#app').querySelector('main'); if(main) { main.innerHTML = renderCurriculum(); lucide.createIcons(); } }
+function renderLexiconOnly() { const main = $('#app').querySelector('main'); if(main) { main.innerHTML = renderLexicon(); bindEvents(); lucide.createIcons(); } }
+function renderVocabLabOnly() { const cont = $('#weekWordsList'); if(cont) { cont.innerHTML = renderVocabLabListHTML(); lucide.createIcons(); } }
+function renderVocabLabListHTML() { const w = getters.currentWeekData(); return w.words.map(v=>{const ex=state.words.find(x=>x.headword.toLowerCase()===v.toLowerCase()); const learned=ex?.srs?.state===2, learning=ex?.srs?.state===1; return `<div class="card flex items-center justify-between gap-4 p-3"><div class="flex items-center gap-3"><strong class="text-lg text-cyan-300">${escapeHtml(v)}</strong><span class="word-chip text-xs ${learned?'learned':learning?'learning':''}">${ex?ex.level:'—'}</span>${ex&&ex.ipa?`<span class="text-sm text-gray-400 font-mono">${escapeHtml(ex.ipa)}</span>`:''}</div><div class="flex gap-1"><button data-play="${ex?.audioUrl||''}" class="audio-btn" ${!ex?.audioUrl?'disabled':''} title="Play"><i data-lucide="volume-2" class="w-4 h-4"></i></button>${ex?`<button data-edit="${ex.id}" class="btn-ghost p-2 text-xs">Edit</button>`:`<button data-add-word="${escapeHtml(v)}" class="btn-primary btn-sm text-xs">+ Add</button>`}</div></div>`}).join(''); }
+
+// Toast
+function toast(msg, type='info') { state.toasts.push({msg,type}); renderToastsOnly(); setTimeout(()=>{state.toasts.shift();renderToastsOnly();},5000); }
+function renderToast(t, i) { return `<div class="toast ${t.type}" data-dismiss-toast="${i}">${t.msg}<button class="ml-2" data-dismiss-toast="${i}"><i data-lucide="x" class="w-4 h-4"></i></button></div>`; }
+
+// ============================================================
+// 7. VIEW RENDERERS (Layout, Dashboard, Classroom, Curriculum, SRS, Lexicon, Tools, Settings)
+// ============================================================
 function renderLayout() {
   return `
-  <!-- Sidebar -->
   <aside id="sidebar" class="fixed inset-y-0 left-0 w-72 glass border-r border-gray-800 flex flex-col z-40 transform transition-transform duration-300 lg:translate-x-0 ${state.sidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${state.mobileMenuOpen ? 'translate-x-0' : ''}" aria-label="Main Navigation">
     <div class="p-5 border-b border-gray-800 flex items-center gap-3"><div class="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500 to-pink-500 flex items-center justify-center flex-shrink-0"><i data-lucide="brain" class="w-6 h-6 text-gray-900"></i></div><div class="min-w-0"><h1 class="font-bold text-xl tracking-tight truncate bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">Fluency Lab</h1><p class="text-xs text-gray-500 truncate">B1 → C2 • 26 Weeks</p></div></div>
     <nav class="flex-1 p-3 space-y-1 overflow-y-auto">${CLASSROOM_TABS.concat([{id:'curriculum',icon:'book-open',label:'Curriculum'},{id:'srs',icon:'refresh-cw',label:'SRS Review'},{id:'lexicon',icon:'dictionary',label:'Lexicon'},{id:'tools',icon:'wrench',label:'Toolkit'},{id:'settings',icon:'settings',label:'Settings'}]).map(nav => `
@@ -253,15 +283,9 @@ function renderLayout() {
     `).join('')}</nav>
     <div class="p-4 border-t border-gray-800 space-y-3"><div class="flex items-center justify-between"><span class="text-gray-400 text-sm">Streak</span><span class="font-bold text-cyan-400 flex items-center gap-1"><i data-lucide="flame" class="w-4 h-4"></i> <span>${state.streak}</span> days</span></div><div class="h-2 bg-gray-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-cyan-500 to-pink-500 rounded-full transition-all duration-500" style="width:${state.currentWeek/26*100}%"></div></div><p class="text-xs text-gray-500 text-center">Week ${state.currentWeek} of 26</p><div class="grid grid-cols-3 gap-2 text-center pt-2"><div class="card p-2"><div class="text-2xl font-bold text-cyan-400">${getters.wordsLearnedCount()}</div><div class="text-xs text-gray-500">Learned</div></div><div class="card p-2"><div class="text-2xl font-bold text-pink-400">${getters.totalHours()}</div><div class="text-xs text-gray-500">Hours</div></div><div class="card p-2"><div class="text-2xl font-bold text-green-400">${getters.retentionRate()}%</div><div class="text-xs text-gray-500">Retention</div></div></div></div>
   </aside>
-  <!-- Mobile Menu Btn -->
   <button id="mobileMenuBtn" class="lg:hidden fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-cyan-500 text-gray-900 shadow-lg flex items-center justify-center" aria-label="Open Menu"><i data-lucide="menu" class="w-6 h-6"></i></button>
   <div id="mobileOverlay" class="lg:hidden fixed inset-0 bg-black/50 z-30 ${state.mobileMenuOpen ? '' : 'hidden'}"></div>
-
-  <!-- Main -->
-  <main class="flex-1 lg:ml-72 min-h-screen overflow-y-auto ${state.mobileMenuOpen ? 'lg:ml-0' : ''}">
-    ${renderView()}
-  </main>
-  <!-- Toasts Container -->
+  <main class="flex-1 lg:ml-72 min-h-screen overflow-y-auto ${state.mobileMenuOpen ? 'lg:ml-0' : ''}">${renderView()}</main>
   <div id="toastContainer" class="fixed bottom-6 right-6 z-60 flex flex-col gap-2">${state.toasts.map((t,i)=>renderToast(t,i)).join('')}</div>
   `;
 }
@@ -279,23 +303,15 @@ function renderView() {
   }
 }
 
-// --- 7. VIEW RENDERERS ---
-
 function renderDashboard() {
   const w = getters.currentWeekData();
-  return `<section class="view p-6 lg:p-10 animate-in"><div class="max-w-6xl mx-auto space-y-8"><header class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4"><div><h2 class="text-3xl lg:text-4xl font-bold tracking-tight">Week <span class="text-cyan-400">${state.currentWeek}</span> <span class="text-gray-500 font-normal text-lg">/ 26</span></h2><p class="text-gray-400 mt-1 text-lg">${w.theme}</p></div><button id="btnEnterClass" class="btn-primary w-full sm:w-auto group flex items-center gap-2"><i data-lucide="play-circle" class="w-5 h-5 group-hover:rotate-12 transition"></i> <span class="hidden sm:inline">Enter Classroom (Day ${getters.todayDay()})</span><span class="sm:hidden">Enter Classroom</span></button></header><div class="grid grid-cols-2 lg:grid-cols-4 gap-4"><div class="card"><div class="text-gray-500 text-sm">Words Learned</div><div class="text-3xl font-bold text-cyan-400">${getters.wordsLearnedCount()}</div></div><div class="card"><div class="text-gray-500 text-sm">Hours Logged</div><div class="text-3xl font-bold text-pink-400">${getters.totalHours()}</div></div><div class="card"><div class="text-gray-500 text-sm">SRS Retention</div><div class="text-3xl font-bold text-green-400">${getters.retentionRate()}%</div></div><div class="card"><div class="text-gray-500 text-sm">Current Level</div><div class="text-3xl font-bold text-yellow-400">${getters.estimatedLevel()}</div></div></div><div class="grid lg:grid-cols-3 gap-6"><div class="lg:col-span-2 card"><h3 class="font-semibold mb-4 flex items-center gap-2"><i data-lucide="clipboard-list" class="w-5 h-5 text-cyan-400"></i> Today's Session Plan (Week ${state.currentWeek})</h3><div class="space-y-3">${[
-    `<div class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="book-open" class="w-5 h-5 text-cyan-400"></i><div><strong>Vocab Focus:</strong> ${escapeHtml(w.vocabFocus)}</div></div>`,
-    `<div class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="file-text" class="w-5 h-5 text-pink-400"></i><div><strong>Grammar:</strong> ${escapeHtml(w.grammar)}</div></div>`,
-    `<div class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="headphones" class="w-5 h-5 text-green-400"></i><div><strong>Input:</strong> ${escapeHtml(w.input)}</div></div>`,
-    `<div class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="mic" class="w-5 h-5 text-yellow-400"></i><div><strong>Output:</strong> ${escapeHtml(w.output)}</div></div>`
-  ].join('')}</div></div><div class="card"><h3 class="font-semibold mb-4 flex items-center gap-2"><i data-lucide="target" class="w-5 h-5 text-pink-400"></i> Weekly Targets</h3><ul class="space-y-3 text-sm">${Object.values(CHECKLIST_ITEMS).map(item=>`<li class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="check-circle" class="w-5 h-5 text-green-400 flex-shrink-0"></i><span>${item.label} <strong>${item.time}</strong></span></li>`).join('')}<li class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="refresh-cw" class="w-5 h-5 text-cyan-400 flex-shrink-0"></i><span>Review <strong>ALL</strong> due SRS cards (${getters.dueCount()})</span></li></ul></div></div><div class="grid md:grid-cols-3 gap-4">${['srs','input','output'].map(type=>`<button data-action="${type}" class="card text-left group hover:border-${type==='srs'?'cyan':type==='input'?'pink':'green'}-500/50"><i data-lucide="${type==='srs'?'rotate-ccw':type==='input'?'headphones':'mic'}" class="w-6 h-6 text-${type==='srs'?'cyan':type==='input'?'pink':'green'}-400 mb-2"></i><h4 class="font-semibold">${type==='srs'?'SRS Review':type==='input'?'Input Session':'Output Session'}</h4><p class="text-sm text-gray-500 mt-1">${type==='srs'?'Spaced repetition':'Curated native content'}</p></button>`).join('')}</div></div></section>`;
+  return `<section class="view p-6 lg:p-10 animate-in"><div class="max-w-6xl mx-auto space-y-8"><header class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4"><div><h2 class="text-3xl lg:text-4xl font-bold tracking-tight">Week <span class="text-cyan-400">${state.currentWeek}</span> <span class="text-gray-500 font-normal text-lg">/ 26</span></h2><p class="text-gray-400 mt-1 text-lg">${w.theme}</p></div><button id="btnEnterClass" class="btn-primary w-full sm:w-auto group flex items-center gap-2"><i data-lucide="play-circle" class="w-5 h-5 group-hover:rotate-12 transition"></i> <span class="hidden sm:inline">Enter Classroom (Day ${getters.todayDay()})</span><span class="sm:hidden">Enter Classroom</span></button></header><div class="grid grid-cols-2 lg:grid-cols-4 gap-4"><div class="card"><div class="text-gray-500 text-sm">Words Learned</div><div class="text-3xl font-bold text-cyan-400">${getters.wordsLearnedCount()}</div></div><div class="card"><div class="text-gray-500 text-sm">Hours Logged</div><div class="text-3xl font-bold text-pink-400">${getters.totalHours()}</div></div><div class="card"><div class="text-gray-500 text-sm">SRS Retention</div><div class="text-3xl font-bold text-green-400">${getters.retentionRate()}%</div></div><div class="card"><div class="text-gray-500 text-sm">Current Level</div><div class="text-3xl font-bold text-yellow-400">${getters.estimatedLevel()}</div></div></div><div class="grid lg:grid-cols-3 gap-6"><div class="lg:col-span-2 card"><h3 class="font-semibold mb-4 flex items-center gap-2"><i data-lucide="clipboard-list" class="w-5 h-5 text-cyan-400"></i> Today's Session Plan (Week ${state.currentWeek})</h3><div class="space-y-3">${[`<div class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="book-open" class="w-5 h-5 text-cyan-400"></i><div><strong>Vocab Focus:</strong> ${escapeHtml(w.vocabFocus)}</div></div>`,`<div class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="file-text" class="w-5 h-5 text-pink-400"></i><div><strong>Grammar:</strong> ${escapeHtml(w.grammar)}</div></div>`,`<div class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="headphones" class="w-5 h-5 text-green-400"></i><div><strong>Input:</strong> ${escapeHtml(w.input)}</div></div>`,`<div class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="mic" class="w-5 h-5 text-yellow-400"></i><div><strong>Output:</strong> ${escapeHtml(w.output)}</div></div>`].join('')}</div></div><div class="card"><h3 class="font-semibold mb-4 flex items-center gap-2"><i data-lucide="target" class="w-5 h-5 text-pink-400"></i> Weekly Targets</h3><ul class="space-y-3 text-sm">${Object.values(CHECKLIST_ITEMS).map(item=>`<li class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="check-circle" class="w-5 h-5 text-green-400 flex-shrink-0"></i><span>${item.label} <strong>${item.time}</strong></span></li>`).join('')}<li class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"><i data-lucide="refresh-cw" class="w-5 h-5 text-cyan-400 flex-shrink-0"></i><span>Review <strong>ALL</strong> due SRS cards (${getters.dueCount()})</span></li></ul></div></div><div class="grid md:grid-cols-3 gap-4">${['srs','input','output'].map(type=>`<button data-action="${type}" class="card text-left group hover:border-${type==='srs'?'cyan':type==='input'?'pink':'green'}-500/50"><i data-lucide="${type==='srs'?'rotate-ccw':type==='input'?'headphones':'mic'}" class="w-6 h-6 text-${type==='srs'?'cyan':type==='input'?'pink':'green'}-400 mb-2"></i><h4 class="font-semibold">${type==='srs'?'SRS Review':type==='input'?'Input Session':'Output Session'}</h4><p class="text-sm text-gray-500 mt-1">${type==='srs'?'Spaced repetition':'Curated native content'}</p></button>`).join('')}</div></div></section>`;
 }
 
 function renderClassroom() {
   const w = getters.currentWeekData();
   const checks = getters.dailyChecks();
-  const tabContent = renderClassroomTabContent();
-  return `<section class="view p-4 lg:p-6"><div class="max-w-7xl mx-auto h-[calc(100vh-2rem)] lg:h-[calc(100vh-3rem)] flex flex-col"><header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 p-4 card rounded-xl shrink-0"><div class="flex items-center gap-4"><button data-view="dashboard" class="btn-ghost p-2 lg:hidden"><i data-lucide="arrow-left" class="w-5 h-5"></i></button><div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-pink-500 flex items-center justify-center flex-shrink-0"><i data-lucide="graduation-cap" class="w-6 h-6 text-gray-900"></i></div><div><h1 class="font-bold text-xl">${w.theme}</h1><p class="text-sm text-gray-400">Week ${state.currentWeek} • ${getters.phaseName()}</p></div></div><div class="flex flex-wrap items-center gap-2 ml-auto"><span class="btn-xs btn-secondary">Day ${state.classroomDay} of 6</span><button id="prevDay" class="btn-xs btn-secondary" ${state.classroomDay<=1?'disabled':''}><i data-lucide="chevron-left" class="w-4 h-4"></i></button><button id="nextDay" class="btn-xs btn-secondary" ${state.classroomDay>=6?'disabled':''}><i data-lucide="chevron-right" class="w-4 h-4"></i></button><button id="completeWeek" class="btn-xs btn-primary" ${getters.isWeekComplete()?'':'style="display:none"'}><i data-lucide="check-circle-2" class="w-4 h-4 mr-1"></i> Complete Week</button></div></header><div class="flex-1 flex overflow-hidden"><div class="flex-1 overflow-y-auto pr-4 mr-4 border-r border-gray-800"><div role="tablist" class="flex flex-wrap gap-1 mb-4 sticky top-0 bg-gradient-to-b from-transparent via-50% to-[var(--bg)] z-10 pb-4">${CLASSROOM_TABS.map(tab=>`<button data-tab="${tab.id}" class="tab-btn ${state.activeClassroomTab===tab.id?'active':''}" aria-selected="${state.activeClassroomTab===tab.id}"><i data-lucide="${tab.icon}" class="w-4 h-4 mr-1.5"></i> ${tab.label}</button>`).join('')}</div>${tabContent}</div><aside class="w-80 lg:w-88 flex-shrink-0 p-4 space-y-4"><div class="card sticky top-4"><h3 class="font-semibold mb-3 flex items-center gap-2"><i data-lucide="clipboard-check" class="w-5 h-5 text-cyan-400"></i> Daily Checklist</h3><ul class="space-y-2">${Object.entries(CHECKLIST_ITEMS).map(([k,v])=>`<li><label class="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-800/50 transition"><input type="checkbox" data-check="${v.key}" class="w-5 h-5 rounded border-gray-600 text-cyan-500 focus:ring-cyan-500" ${checks[v.key]?'checked':''}><span class="text-sm">${v.label}</span><span class="ml-auto text-xs text-gray-500">${v.time}</span></label></li>`).join('')}</ul><div class="pt-3 mt-3 border-t border-gray-800"><button id="logSession" class="btn-primary w-full text-sm" ${Object.values(checks).every(v=>v)?'disabled':''}><i data-lucide="save" class="w-4 h-4 mr-1"></i> ${Object.values(checks).every(v=>v)?'Day Logged!':`Log Day (${Math.round(Object.values(checks).filter(v=>v).length/4*100)}%)`}</button></div></div><div class="card"><h3 class="font-semibold mb-3 flex items-center gap-2"><i data-lucide="timer" class="w-5 h-5 text-pink-400"></i> Focus Timer</h3><div class="relative w-40 h-40 mx-auto mb-4"><svg class="w-full h-full progress-ring"><circle class="text-gray-800" stroke-width="6" fill="none" r="60" cx="80" cy="80"></circle><circle class="progress-ring-circle text-cyan-500" stroke-width="6" stroke-linecap="round" fill="none" r="60" cx="80" cy="80" style="stroke-dasharray: 377; stroke-dashoffset: ${377 - (377 * getters.timerProgress() / 100)}"></circle></svg><div class="absolute inset-0 flex flex-col items-center justify-center"><span class="font-mono text-3xl font-bold" id="timerDisplay">${getters.timerDisplay()}</span><span class="text-xs text-gray-500">${state.timerMode}</span></div></div><div class="flex gap-2"><button data-timer="1500" class="btn-secondary flex-1 text-xs">Pomodoro (25)</button><button data-timer="3000" class="btn-secondary flex-1 text-xs">Deep Work (50)</button></div><div class="flex gap-2 mt-2"><button id="timerToggle" class="btn-primary flex-1 text-sm"><i data-lucide="${state.timerRunning?'pause':'play'}" class="w-4 h-4 mr-1"></i> ${state.timerRunning?'Pause':'Resume'}</button><button id="timerReset" class="btn-ghost flex-1 text-sm"><i data-lucide="rotate-ccw" class="w-4 h-4 mr-1"></i> Reset</button></div></div><div class="card"><h3 class="font-semibold mb-3 flex items-center gap-2"><i data-lucide="lightbulb" class="w-5 h-5 text-yellow-400"></i> Quick Tips</h3><ul class="space-y-2 text-sm text-gray-400"><li>💡 <strong>Shadowing:</strong> Repeat 0.5s after audio. Mimic melody.</li><li>🔁 <strong>SRS:</strong> Be honest. "Again" saves time later.</li><li>📝 <strong>Output:</strong> Record audio. Compare tomorrow.</li><li>🎯 <strong>Grammar:</strong> Do 1 exercise type daily.</li></ul></div></aside></div></div></section>`;
+  return `<section class="view p-4 lg:p-6"><div class="max-w-7xl mx-auto h-[calc(100vh-2rem)] lg:h-[calc(100vh-3rem)] flex flex-col"><header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 p-4 card rounded-xl shrink-0"><div class="flex items-center gap-4"><button data-view="dashboard" class="btn-ghost p-2 lg:hidden"><i data-lucide="arrow-left" class="w-5 h-5"></i></button><div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-pink-500 flex items-center justify-center flex-shrink-0"><i data-lucide="graduation-cap" class="w-6 h-6 text-gray-900"></i></div><div><h1 class="font-bold text-xl">${w.theme}</h1><p class="text-sm text-gray-400">Week ${state.currentWeek} • ${getters.phaseName()}</p></div></div><div class="flex flex-wrap items-center gap-2 ml-auto"><span class="btn-xs btn-secondary">Day ${state.classroomDay} of 6</span><button id="prevDay" class="btn-xs btn-secondary" ${state.classroomDay<=1?'disabled':''}><i data-lucide="chevron-left" class="w-4 h-4"></i></button><button id="nextDay" class="btn-xs btn-secondary" ${state.classroomDay>=6?'disabled':''}><i data-lucide="chevron-right" class="w-4 h-4"></i></button><button id="completeWeek" class="btn-xs btn-primary" ${getters.isWeekComplete()?'':'style="display:none"'}><i data-lucide="check-circle-2" class="w-4 h-4 mr-1"></i> Complete Week</button></div></header><div class="flex-1 flex overflow-hidden"><div class="flex-1 overflow-y-auto pr-4 mr-4 border-r border-gray-800"><div role="tablist" class="flex flex-wrap gap-1 mb-4 sticky top-0 bg-gradient-to-b from-transparent via-50% to-[var(--bg)] z-10 pb-4">${CLASSROOM_TABS.map(tab=>`<button data-tab="${tab.id}" class="tab-btn ${state.activeClassroomTab===tab.id?'active':''}" aria-selected="${state.activeClassroomTab===tab.id}"><i data-lucide="${tab.icon}" class="w-4 h-4 mr-1.5"></i> ${tab.label}</button>`).join('')}</div>${renderClassroomTabContent()}</div><aside class="w-80 lg:w-88 flex-shrink-0 p-4 space-y-4"><div class="card sticky top-4"><h3 class="font-semibold mb-3 flex items-center gap-2"><i data-lucide="clipboard-check" class="w-5 h-5 text-cyan-400"></i> Daily Checklist</h3><ul class="space-y-2">${Object.entries(CHECKLIST_ITEMS).map(([k,v])=>`<li><label class="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-800/50 transition"><input type="checkbox" data-check="${v.key}" class="w-5 h-5 rounded border-gray-600 text-cyan-500 focus:ring-cyan-500" ${checks[v.key]?'checked':''}><span class="text-sm">${v.label}</span><span class="ml-auto text-xs text-gray-500">${v.time}</span></label></li>`).join('')}</ul><div class="pt-3 mt-3 border-t border-gray-800"><button id="logSession" class="btn-primary w-full text-sm" ${Object.values(checks).every(v=>v)?'disabled':''}><i data-lucide="save" class="w-4 h-4 mr-1"></i> ${Object.values(checks).every(v=>v)?'Day Logged!':`Log Day (${Math.round(Object.values(checks).filter(v=>v).length/4*100)}%)`}</button></div></div><div class="card"><h3 class="font-semibold mb-3 flex items-center gap-2"><i data-lucide="timer" class="w-5 h-5 text-pink-400"></i> Focus Timer</h3><div class="relative w-40 h-40 mx-auto mb-4"><svg class="w-full h-full progress-ring"><circle class="text-gray-800" stroke-width="6" fill="none" r="60" cx="80" cy="80"></circle><circle class="progress-ring-circle text-cyan-500" stroke-width="6" stroke-linecap="round" fill="none" r="60" cx="80" cy="80" style="stroke-dasharray: 377; stroke-dashoffset: ${377 - (377 * getters.timerProgress() / 100)}"></circle></svg><div class="absolute inset-0 flex flex-col items-center justify-center"><span class="font-mono text-3xl font-bold" id="timerDisplay">${getters.timerDisplay()}</span><span class="text-xs text-gray-500">${state.timerMode}</span></div></div><div class="flex gap-2"><button data-timer="1500" class="btn-secondary flex-1 text-xs">Pomodoro (25)</button><button data-timer="3000" class="btn-secondary flex-1 text-xs">Deep Work (50)</button></div><div class="flex gap-2 mt-2"><button id="timerToggle" class="btn-primary flex-1 text-sm"><i data-lucide="${state.timerRunning?'pause':'play'}" class="w-4 h-4 mr-1"></i> ${state.timerRunning?'Pause':'Resume'}</button><button id="timerReset" class="btn-ghost flex-1 text-sm"><i data-lucide="rotate-ccw" class="w-4 h-4 mr-1"></i> Reset</button></div></div><div class="card"><h3 class="font-semibold mb-3 flex items-center gap-2"><i data-lucide="lightbulb" class="w-5 h-5 text-yellow-400"></i> Quick Tips</h3><ul class="space-y-2 text-sm text-gray-400"><li>💡 <strong>Shadowing:</strong> Repeat 0.5s after audio. Mimic melody.</li><li>🔁 <strong>SRS:</strong> Be honest. "Again" saves time later.</li><li>📝 <strong>Output:</strong> Record audio. Compare tomorrow.</li><li>🎯 <strong>Grammar:</strong> Do 1 exercise type daily.</li></ul></div></aside></div></div></section>`;
 }
 
 function renderClassroomTabContent() {
@@ -318,15 +334,12 @@ function renderDayLesson() {
 
 function renderGrammarLab() {
   const w = getters.currentWeekData();
-  // We need to store exercise state in a global var or re-generate on render.
-  // For simplicity in Vanilla JS single pass, we render the UI shell and init logic in bindEvents.
-  // We'll use a global `grammarExercise` object to hold current state.
   return `<div class="space-y-6"><header class="card"><h2 class="font-bold text-xl">${w.grammar}</h2></header><div class="card">${w.grammarDetail}</div><div class="card"><h3 class="font-semibold mb-4">Interactive Exercises</h3><div class="flex flex-wrap gap-2 mb-4" id="grammarTabs">${['cloze','transform','mcq','wordform'].map(t=>`<button data-ex-type="${t}" class="tab-btn ${window.grammarExerciseType===t?'active':''}">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('')}</div><div id="grammarExerciseContainer" class="space-y-3"></div><div class="flex gap-2 mt-4"><button id="checkAnswers" class="btn-primary" disabled><i data-lucide="check-circle" class="w-4 h-4 mr-1"></i> Check Answers</button><button id="newExercise" class="btn-secondary"><i data-lucide="refresh-cw" class="w-4 h-4 mr-1"></i> New Exercise</button></div></div></div>`;
 }
 
 function renderVocabLab() {
   const w = getters.currentWeekData();
-  return `<div class="space-y-4"><header class="flex items-center justify-between"><h2 class="font-bold text-xl">Vocab Lab: Week ${w.w}</h2><button id="addWordFromList" class="btn-primary btn-sm"><i data-lucide="plus" class="w-4 h-4 mr-1"></i> Add Word</button></header><div class="card"><input type="text" id="vocabSearch" class="input-field" placeholder="Filter weekly words..."></div><div class="space-y-2" id="weekWordsList">${w.words.map(v=>{const ex=state.words.find(x=>x.headword.toLowerCase()===v.toLowerCase()); const learned=ex?.srs?.state===2, learning=ex?.srs?.state===1; return `<div class="card flex items-center justify-between gap-4 p-3"><div class="flex items-center gap-3"><strong class="text-lg text-cyan-300">${escapeHtml(v)}</strong><span class="word-chip text-xs ${learned?'learned':learning?'learning':''}">${ex?ex.level:'—'}</span>${ex&&ex.ipa?`<span class="text-sm text-gray-400 font-mono">${escapeHtml(ex.ipa)}</span>`:''}</div><div class="flex gap-1"><button data-play="${ex?.audioUrl||''}" class="audio-btn" ${!ex?.audioUrl?'disabled':''} title="Play"><i data-lucide="volume-2" class="w-4 h-4"></i></button>${ex?`<button data-edit="${ex.id}" class="btn-ghost p-2 text-xs">Edit</button>`:`<button data-add-word="${escapeHtml(v)}" class="btn-primary btn-sm text-xs">+ Add</button>`}</div></div>`}).join('')}</div></div>`;
+  return `<div class="space-y-4"><header class="flex items-center justify-between"><h2 class="font-bold text-xl">Vocab Lab: Week ${w.w}</h2><button id="addWordFromList" class="btn-primary btn-sm"><i data-lucide="plus" class="w-4 h-4 mr-1"></i> Add Word</button></header><div class="card"><input type="text" id="vocabSearch" class="input-field" placeholder="Filter weekly words..."></div><div class="space-y-2" id="weekWordsList">${renderVocabLabListHTML()}</div></div>`;
 }
 
 function renderShadowing() {
@@ -380,29 +393,25 @@ function renderSettings() {
   return `<section class="view p-6 lg:p-10"><div class="max-w-3xl mx-auto space-y-8"><header><h2 class="text-3xl font-bold">Settings & Data</h2></header><div class="card space-y-6"><div><h3 class="font-semibold mb-4">Study Preferences</h3><div class="grid gap-4 md:grid-cols-2"><label class="flex flex-col gap-1"><span class="text-sm text-gray-400">Daily Goal (minutes)</span><input type="number" id="setDailyGoal" class="input-field" value="${state.settings.dailyGoal}"></label><label class="flex flex-col gap-1"><span class="text-sm text-gray-400">New Cards/Day (SRS)</span><input type="number" id="setNewCards" class="input-field" value="${state.settings.newCardsDay}"></label><label class="flex flex-col gap-1"><span class="text-sm text-gray-400">Target CEFR Level</span><select id="setTargetLevel" class="input-field"><option value="C2" ${state.settings.targetLevel==='C2'?'selected':''}>C2 Mastery</option><option value="C1" ${state.settings.targetLevel==='C1'?'selected':''}>C1 Advanced</option><option value="B2" ${state.settings.targetLevel==='B2'?'selected':''}>B2 Upper Intermediate</option></select></label><label class="flex flex-col gap-1"><span class="text-sm text-gray-400">Theme</span><select id="setTheme" class="input-field"><option value="dark" ${state.settings.theme==='dark'?'selected':''}>Dark</option><option value="light" ${state.settings.theme==='light'?'selected':''}>Light</option><option value="system" ${state.settings.theme==='system'?'selected':''}>System</option></select></label></div></div><div class="border-t border-gray-800 pt-6"><h3 class="font-semibold mb-4">Data Management (LocalStorage)</h3><div class="flex flex-wrap gap-3"><button id="btnExportAll" class="btn-secondary"><i data-lucide="download" class="w-4 h-4 mr-2"></i> Export Full Backup (JSON)</button><label class="btn-secondary cursor-pointer"><i data-lucide="upload" class="w-4 h-4 mr-2"></i> Import Backup <input type="file" id="importFile" accept=".json" class="hidden"></label><button id="btnResetAll" class="btn bg-red-900/50 text-red-400 hover:bg-red-900 border border-red-900"><i data-lucide="trash-2" class="w-4 h-4 mr-2"></i> Reset ALL Data</button></div></div></div></div></section>`;
 }
 
-function renderToast(t, i) {
-  return `<div class="toast ${t.type}" data-toast="${i}">${t.msg}<button class="ml-2" data-dismiss="${i}"><i data-lucide="x" class="w-4 h-4"></i></button></div>`;
-}
-
-// --- 8. MODALS RENDER (Appended to body via innerHTML in bindEvents or separate container) ---
-// We'll handle modals by injecting into a modal-root div.
-function ensureModalRoot() { if(!$('#modalRoot')) { const d=document.createElement('div'); d.id='modalRoot'; document.body.appendChild(d); } return $('#modalRoot'); }
-
+// ============================================================
+// 8. MODALS
+// ============================================================
 function openWordModal(id=null) {
   if(id) { const w=state.words.find(x=>x.id===id); if(!w) return; state.editingWordId=id; state.wordForm={headword:w.headword, ipa:w.ipa||'', def:w.def, ex:w.ex||'', type:w.type, level:w.level, status:w.status, tags:w.tags.join(', '), audioUrl:w.audioUrl||'', loading:false, apiError:''}; }
   else { state.editingWordId=null; state.wordForm={headword:'', ipa:'', def:'', ex:'', type:'word', level:'B2', status:'new', tags:`week-${state.currentWeek}`, audioUrl:'', loading:false, apiError:''}; }
   state.showWordModal=true; renderModals();
 }
 function closeWordModal() { state.showWordModal=false; state.editingWordId=null; renderModals(); }
-function openSessionModal(type) { const w=getters.currentWeekData(); if(type==='srs'){ startSRS(); return; } state.sessionModalTitle=type==='input'?'Input Session':'Output Session'; if(type==='input') state.sessionModalContent=`<div class="space-y-4"><div class="card"><h4 class="font-semibold mb-2">🎧 This Week</h4><p class="text-gray-300">${w.input}</p></div><div class="card"><h4 class="font-semibold mb-2">📝 Active Listening Log</h4><textarea class="input-field min-h-[150px]" placeholder="1. Source/Title:\n2. 3 New phrases:\n3. Main idea:\n4. Shadowing segment (timestamp):"></textarea></div><div class="card"><h4 class="font-semibold mb-2">🔗 Quick Links</h4><div class="flex flex-wrap gap-2"><a href="https://youglish.com" target="_blank" class="btn-secondary text-sm">YouGlish</a><a href="https://skell.sketchengine.eu" target="_blank" class="btn-secondary text-sm">SkELL</a><a href="https://www.ted.com/talks" target="_blank" class="btn-secondary text-sm">TED Talks</a></div></div></div>`; else state.sessionModalContent=`<div class="space-y-4"><div class="card"><h4 class="font-semibold mb-2">🎤 Task</h4><p class="text-gray-300">${w.output}</p></div><div class="card"><h4 class="font-semibold mb-2">🗣️ Speaking (Record)</h4><textarea class="input-field min-h-[100px]" placeholder="Speak 2 min. Record on phone."></textarea><div class="mt-3"><button class="btn-secondary text-sm" onclick="startQuickRecording()"><i data-lucide="mic" class="w-4 h-4 mr-1"></i> Start 2-min Recording</button></div></div><div class="card"><h4 class="font-semibold mb-2">✍️ Writing</h4><textarea class="input-field min-h-[200px]" placeholder="Write 200-300w. Use 5 weekly words. Paste into LanguageTool after."></textarea></div><div class="card bg-gray-900/50 border-yellow-500/30"><h4 class="font-semibold mb-2 text-yellow-400">🤖 AI Feedback Prompt</h4><pre class="bg-gray-900 p-3 rounded text-sm text-gray-300 overflow-x-auto whitespace-pre-wrap">Act as C2 examiner. Correct my text. Give: 1. Corrected version. 2. 3 Better lexical choices. 3. 1 Grammar pattern to review. 4. CEFR estimate.
+function openSessionModal(type) { const w=getters.currentWeekData(); if(type==='srs'){ startSRS(); return; } state.sessionModalTitle=type==='input'?'Input Session':'Output Session'; if(type==='input') state.sessionModalContent=`<div class="space-y-4"><div class="card"><h4 class="font-semibold mb-2">🎧 This Week</h4><p class="text-gray-300">${w.input}</p></div><div class="card"><h4 class="font-semibold mb-2">📝 Active Listening Log</h4><textarea class="input-field min-h-[150px]" placeholder="1. Source/Title:\n2. 3 New phrases:\n3. Main idea:\n4. Shadowing segment (timestamp):"></textarea></div><div class="card"><h4 class="font-semibold mb-2">🔗 Quick Links</h4><div class="flex flex-wrap gap-2"><a href="https://youglish.com" target="_blank" class="btn-secondary text-sm">YouGlish</a><a href="https://skell.sketchengine.eu" target="_blank" class="btn-secondary text-sm">SkELL</a><a href="https://www.ted.com/talks" target="_blank" class="btn-secondary text-sm">TED Talks</a></div></div></div>`; else state.sessionModalContent=`<div class="space-y-4"><div class="card"><h4 class="font-semibold mb-2">🎤 Task</h4><p class="text-gray-300">${w.output}</p></div><div class="card"><h4 class="font-semibold mb-2">🗣️ Speaking (Record)</h4><textarea class="input-field min-h-[100px]" placeholder="Speak 2 min. Record on phone."></textarea><div class="mt-3"><button class="btn-secondary text-sm" onclick="startRecording()"><i data-lucide="mic" class="w-4 h-4 mr-1"></i> Start 2-min Recording</button></div></div><div class="card"><h4 class="font-semibold mb-2">✍️ Writing</h4><textarea class="input-field min-h-[200px]" placeholder="Write 200-300w. Use 5 weekly words. Paste into LanguageTool after."></textarea></div><div class="card bg-gray-900/50 border-yellow-500/30"><h4 class="font-semibold mb-2 text-yellow-400">🤖 AI Feedback Prompt</h4><pre class="bg-gray-900 p-3 rounded text-sm text-gray-300 overflow-x-auto whitespace-pre-wrap">Act as C2 examiner. Correct my text. Give: 1. Corrected version. 2. 3 Better lexical choices. 3. 1 Grammar pattern to review. 4. CEFR estimate.
 Text: [PASTE HERE]</pre></div></div>`; state.sessionTimerSeconds=state.settings.dailyGoal*60; state.showSessionModal=true; startSessionTimer(); renderModals(); }
 function closeSessionModal() { state.showSessionModal=false; clearInterval(state.sessionTimerInterval); renderModals(); }
 function openWeekModal(num) { state.selectedWeekNum=num; state.selectedWeekData=CURRICULUM[num-1]; state.showWeekModal=true; renderModals(); }
 function closeWeekModal() { state.showWeekModal=false; renderModals(); }
+function closeConfirmReset() { state.showConfirmReset=false; renderModals(); }
 function confirmReset() { state.showConfirmReset=true; renderModals(); }
 
 function renderModals() {
-  const root = ensureModalRoot();
+  const root = $('#modalRoot');
   let html = '';
   if(state.showWordModal) html += renderWordModal();
   if(state.showSessionModal) html += renderSessionModal();
@@ -410,102 +419,124 @@ function renderModals() {
   if(state.showConfirmReset) html += renderConfirmResetModal();
   root.innerHTML = html;
   lucide.createIcons();
-  // Bind modal specific events
   $('#wordForm')?.addEventListener('submit', saveWord);
   $('#fetchWordBtn')?.addEventListener('click', fetchWordData);
-  $$('.sr-btn[data-grade]').forEach(b=>b.onclick=()=>answerSRS(parseInt(b.dataset.grade)));
-  $$('#modalRoot .modal-overlay').forEach(m=>m.onclick=e=>{if(e.target===m){ if(m.querySelector('#wordForm')) closeWordModal(); else if(m.querySelector('#sessionTimerDisplay')) closeSessionModal(); else if(m.querySelector('[data-week-close]')) closeWeekModal(); else state.showConfirmReset=false; renderModals(); }});
 }
 
 function renderWordModal() { return `<div class="modal-overlay" onclick="event.target===this && closeWordModal()"><div class="modal-box max-w-2xl"><div class="modal-header"><h3 class="text-lg font-bold">${state.editingWordId?'Edit Word':'Add New Word'}</h3><button onclick="closeWordModal()" class="btn-ghost p-2"><i data-lucide="x" class="w-5 h-5"></i></button></div><form id="wordForm" class="modal-body space-y-4"><div class="grid gap-4 md:grid-cols-2"><div><label class="block text-sm text-gray-400 mb-1">Headword / Phrase *</label><input type="text" id="wHeadword" class="input-field" required value="${escapeHtml(state.wordForm.headword)}" placeholder="e.g., mitigate, come up with"></div><div><label class="block text-sm text-gray-400 mb-1">IPA / Pronunciation</label><input type="text" id="wIpa" class="input-field" value="${escapeHtml(state.wordForm.ipa)}" placeholder="/ˈmɪt.ɪ.ɡeɪt/" readonly></div></div><div class="flex items-center gap-2"><button type="button" id="fetchWordBtn" class="btn-secondary btn-sm" ${!state.wordForm.headword||state.wordForm.loading?'disabled':''}><i data-lucide="sparkles" class="w-4 h-4 mr-1"></i> <span>${state.wordForm.loading?'Fetching...':'Auto-Fill from Dictionary'}</span></button><span class="text-xs text-red-400" ${state.wordForm.apiError?'':'style="display:none"'}>${escapeHtml(state.wordForm.apiError)}</span></div><div><label class="block text-sm text-gray-400 mb-1">Definition *</label><textarea id="wDef" class="input-field min-h-[80px]" required>${escapeHtml(state.wordForm.def)}</textarea></div><div><label class="block text-sm text-gray-400 mb-1">Example Sentence</label><textarea id="wEx" class="input-field min-h-[60px]">${escapeHtml(state.wordForm.ex)}</textarea></div><div class="grid gap-4 md:grid-cols-3"><div><label class="block text-sm text-gray-400 mb-1">Type</label><select id="wType" class="input-field">${['word','collocation','phrasal','idiom','connector','academic'].map(v=>`<option value="${v}" ${state.wordForm.type===v?'selected':''}>${capitalize(v)}</option>`).join('')}</select></div><div><label class="block text-sm text-gray-400 mb-1">CEFR Level</label><select id="wLevel" class="input-field">${['B1','B2','C1','C2'].map(v=>`<option value="${v}" ${state.wordForm.level===v?'selected':''}>${v}</option>`).join('')}</select></div><div><label class="block text-sm text-gray-400 mb-1">Status</label><select id="wStatus" class="input-field">${['new','learning','learned'].map(v=>`<option value="${v}" ${state.wordForm.status===v?'selected':''}>${capitalize(v)}</option>`).join('')}</select></div></div><div><label class="block text-sm text-gray-400 mb-1">Tags (comma separated)</label><input type="text" id="wTags" class="input-field" value="${escapeHtml(state.wordForm.tags)}" placeholder="business, formal, week-1"></div><input type="hidden" id="wAudioUrl" value="${escapeHtml(state.wordForm.audioUrl)}"><div class="flex justify-end gap-3 pt-4 border-t border-gray-800"><button type="button" onclick="closeWordModal()" class="btn-secondary">Cancel</button><button type="submit" class="btn-primary"><i data-lucide="save" class="w-4 h-4 mr-2"></i> Save Word</button></div></form></div></div>`; }
-function renderSessionModal() { return `<div class="modal-overlay" onclick="event.target===this && closeSessionModal()"><div class="modal-box max-w-3xl"><div class="modal-header"><h3 class="text-lg font-bold">${escapeHtml(state.sessionModalTitle)}</h3><div class="flex items-center gap-4"><span class="font-mono text-cyan-400 text-lg" id="sessionTimerDisplay">${getters.sessionTimerDisplay?getters.sessionTimerDisplay():'--:--'}</span><button onclick="closeSessionModal()" class="btn-ghost p-2"><i data-lucide="x" class="w-5 h-5"></i></button></div></div><div class="modal-body">${state.sessionModalContent}</div></div></div>`; }
-function renderWeekModal() { const w=state.selectedWeekData; if(!w) return ''; const isDone=state.completedWeeks.includes(w.w); return `<div class="modal-overlay" onclick="event.target===this && closeWeekModal()"><div class="modal-box max-w-3xl"><div class="modal-header"><h3 class="text-lg font-bold" data-week-close>Week ${w.w}: ${escapeHtml(w.theme)}</h3><button onclick="closeWeekModal()" class="btn-ghost p-2"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="modal-body"><div class="space-y-6"><div class="grid gap-4 md:grid-cols-2"><div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="target" class="w-4 h-4 text-cyan-400"></i> Vocab Focus</h4><p class="text-gray-300">${escapeHtml(w.vocabFocus)}</p></div><div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="code" class="w-4 h-4 text-pink-400"></i> Grammar Focus</h4><p class="text-gray-300">${escapeHtml(w.grammar)}</p></div></div><div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="headphones" class="w-4 h-4 text-green-400"></i> Comprehensible Input</h4><p class="text-gray-300">${escapeHtml(w.input)}</p></div><div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="mic" class="w-4 h-4 text-yellow-400"></i> Output Task</h4><p class="text-gray-300">${escapeHtml(w.output)}</p></div><div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-purple-400"></i> Target Vocabulary (${w.words.length})</h4><div class="flex flex-wrap gap-2">${w.words.map(v=>{const ex=state.words.find(x=>x.headword.toLowerCase()===v.toLowerCase()); return `<span class="word-chip ${ex?(ex.srs?.state===2?'learned':ex.srs?.state===1?'learning':'':''}">${escapeHtml(v)}</span>`}).join('')}</div></div><div class="flex gap-3 pt-4 border-t border-gray-800"><button onclick="startWeekSession(${w.w})" class="btn-primary flex-1"><i data-lucide="play" class="w-4 h-4 mr-2"></i> Start Session</button><button onclick="toggleWeekComplete(${w.w})" class="btn-secondary flex-1">${isDone?'<i data-lucide="rotate-ccw" class="w-4 h-4 mr-2"></i> Mark Incomplete':'<i data-lucide="check" class="w-4 h-4 mr-2"></i> Mark Complete'}</button></div></div></div></div></div>`; }
-function renderConfirmResetModal() { return `<div class="modal-overlay" onclick="event.target===this && (app.state.showConfirmReset=false, renderModals())"><div class="modal-box max-w-md"><div class="p-6 text-center"><i data-lucide="alert-triangle" class="w-16 h-16 text-red-400 mx-auto mb-4"></i><h3 class="text-xl font-bold mb-2">Reset All Data?</h3><p class="text-gray-400 mb-6">This deletes ALL progress, words, SRS data, and settings. Cannot be undone.</p><div class="flex gap-3 justify-center"><button onclick="app.state.showConfirmReset=false; renderModals()" class="btn-secondary">Cancel</button><button onclick="hardReset()" class="btn bg-red-600 hover:bg-red-700">Yes, Delete Everything</button></div></div></div></div>`; }
+function renderSessionModal() { return `<div class="modal-overlay" onclick="event.target===this && closeSessionModal()"><div class="modal-box max-w-3xl"><div class="modal-header"><h3 class="text-lg font-bold">${escapeHtml(state.sessionModalTitle)}</h3><div class="flex items-center gap-4"><span class="font-mono text-cyan-400 text-lg" id="sessionTimerDisplay">${getters.sessionTimerDisplay()}</span><button onclick="closeSessionModal()" class="btn-ghost p-2"><i data-lucide="x" class="w-5 h-5"></i></button></div></div><div class="modal-body">${state.sessionModalContent}</div></div></div>`; }
+function renderWeekModal() { const w=state.selectedWeekData; if(!w) return ''; const isDone=state.completedWeeks.includes(w.w); return `<div class="modal-overlay" onclick="event.target===this && closeWeekModal()"><div class="modal-box max-w-3xl"><div class="modal-header"><h3 class="text-lg font-bold">Week ${w.w}: ${escapeHtml(w.theme)}</h3><button onclick="closeWeekModal()" class="btn-ghost p-2"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="modal-body"><div class="space-y-6"><div class="grid gap-4 md:grid-cols-2"><div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="target" class="w-4 h-4 text-cyan-400"></i> Vocab Focus</h4><p class="text-gray-300">${escapeHtml(w.vocabFocus)}</p></div><div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="code" class="w-4 h-4 text-pink-400"></i> Grammar Focus</h4><p class="text-gray-300">${escapeHtml(w.grammar)}</p></div></div><div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="headphones" class="w-4 h-4 text-green-400"></i> Comprehensible Input</h4><p class="text-gray-300">${escapeHtml(w.input)}</p></div><div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="mic" class="w-4 h-4 text-yellow-400"></i> Output Task</h4><p class="text-gray-300">${escapeHtml(w.output)}</p></div><div class="card"><h4 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-purple-400"></i> Target Vocabulary (${w.words.length})</h4><div class="flex flex-wrap gap-2">${w.words.map(v=>{const ex=state.words.find(x=>x.headword.toLowerCase()===v.toLowerCase()); return `<span class="word-chip ${ex?(ex.srs?.state===2?'learned':ex.srs?.state===1?'learning':'':''}">${escapeHtml(v)}</span>`}).join('')}</div></div><div class="flex gap-3 pt-4 border-t border-gray-800"><button onclick="startWeekSession(${w.w})" class="btn-primary flex-1"><i data-lucide="play" class="w-4 h-4 mr-2"></i> Start Session</button><button onclick="toggleWeekComplete(${w.w})" class="btn-secondary flex-1">${isDone?'<i data-lucide="rotate-ccw" class="w-4 h-4 mr-2"></i> Mark Incomplete':'<i data-lucide="check" class="w-4 h-4 mr-2"></i> Mark Complete'}</button></div></div></div></div></div>`; }
+function renderConfirmResetModal() { return `<div class="modal-overlay" onclick="event.target===this && closeConfirmReset()"><div class="modal-box max-w-md"><div class="p-6 text-center"><i data-lucide="alert-triangle" class="w-16 h-16 text-red-400 mx-auto mb-4"></i><h3 class="text-xl font-bold mb-2">Reset All Data?</h3><p class="text-gray-400 mb-6">This deletes ALL progress, words, SRS data, and settings. Cannot be undone.</p><div class="flex gap-3 justify-center"><button onclick="closeConfirmReset()" class="btn-secondary">Cancel</button><button onclick="hardReset()" class="btn bg-red-600 hover:bg-red-700">Yes, Delete Everything</button></div></div></div></div>`; }
 
-// --- 9. EVENT BINDING ---
+// ============================================================
+// 9. EVENT BINDING (Delegated)
+// ============================================================
 function bindEvents() {
-  // Navigation
-  $$('[data-view]').forEach(el=>el.onclick=e=>{e.preventDefault(); setView(e.currentTarget.dataset.view);});
-  $$('[data-tab]').forEach(el=>el.onclick=e=>{ state.activeClassroomTab=e.currentTarget.dataset.tab; render(); });
-  $$('[data-phase]').forEach(el=>el.onclick=e=>{ state.curriculumFilter=parseInt(e.currentTarget.dataset.phase)||e.currentTarget.dataset.phase; render(); });
-  $$('[data-filter]').forEach(el=>el.onclick=e=>{ state.lexiconFilter=e.currentTarget.dataset.filter; render(); });
-  $$('[data-action]').forEach(el=>el.onclick=e=>openSessionModal(e.currentTarget.dataset.action));
-  $$('[data-check]').forEach(el=>el.onchange=e=>{ saveDailyCheck(e.target.dataset.check, e.target.checked); });
-  $$('[data-play]').forEach(el=>{ const url=el.dataset.play; if(url) el.onclick=()=>new Audio(url).play(); });
-  $$('[data-edit]').forEach(el=>el.onclick=e=>openWordModal(e.currentTarget.dataset.edit));
-  $$('[data-delete]').forEach(el=>el.onclick=e=>{ if(confirm('Delete permanently?')) deleteWord(e.currentTarget.dataset.delete); });
-  $$('[data-add-word]').forEach(el=>el.onclick=e=>{ openWordModal(); setTimeout(()=>{$('#wHeadword').value=e.currentTarget.dataset.addWord; fetchWordData();}, 100); });
-  $$('[data-week]').forEach(el=>el.onclick=e=>openWeekModal(parseInt(e.currentTarget.dataset.week)));
-  $$('[data-seek]').forEach(el=>el.onclick=e=>seekShadow(parseInt(e.currentTarget.dataset.seek)));
-  $$('[data-speak]').forEach(el=>el.onclick=e=>speakShadow(parseInt(e.currentTarget.dataset.speak)));
-  $$('[data-ex-type]').forEach(el=>el.onclick=e=>{ window.grammarExerciseType=e.currentTarget.dataset.exType; generateGrammarExercise(); });
-  $$('.sr-btn[data-grade]').forEach(b=>b.onclick=()=>answerSRS(parseInt(b.dataset.grade)));
-  $$('[data-dismiss]').forEach(b=>b.onclick=e=>{ state.toasts.splice(parseInt(e.currentTarget.dataset.dismiss),1); render(); });
-
-  // Buttons
-  $('#btnEnterClass')?.onclick=enterClassroom;
-  $('#prevDay')?.onclick=()=>{if(state.classroomDay>1){state.classroomDay--;render();}};
-  $('#nextDay')?.onclick=()=>{if(state.classroomDay<6){state.classroomDay++;render();}};
-  $('#completeWeek')?.onclick=completeWeek;
-  $('#logSession')?.onclick=logSession;
-  $$('[data-timer]').forEach(b=>b.onclick=e=>startTimer(parseInt(e.currentTarget.dataset.timer)));
-  $('#timerToggle')?.onclick=toggleTimer;
-  $('#timerReset')?.onclick=resetTimer;
-  $('#mobileMenuBtn')?.onclick=()=>{state.mobileMenuOpen=!state.mobileMenuOpen;render();};
-  $('#mobileOverlay')?.onclick=()=>{state.mobileMenuOpen=false;render();};
-  $('#sidebar a')?.onclick=()=>{state.sidebarOpen=false;state.mobileMenuOpen=false;}; // Close on nav click
-
-  // Lexicon
-  $('#lexiconSearch')?.oninput=debounce(()=>{state.lexiconSearch=$('#lexiconSearch').value;render();},300);
-  $('#btnAddWord')?.onclick=()=>openWordModal();
-  $('#btnExportJson')?.onclick=()=>exportLexicon('json');
-  $('#btnExportCsv')?.onclick=()=>exportLexicon('csv');
-  $('#vocabSearch')?.oninput=debounce(()=>{render();},300); // Re-render vocab lab list
-  $('#addWordFromList')?.onclick=()=>openWordModal();
-
-  // Shadowing
-  $('#loadShadowVideo')?.onclick=loadShadowVideo;
-  $('#shadowUrl')?.onkeypress=e=>{if(e.key==='Enter')loadShadowVideo();};
-
-  // Output
-  $('#startRecording')?.onclick=startRecording;
-  $('#playRecording')?.onclick=playRecording;
-  $('#copyAIPrompt')?.onclick=copyAIPrompt;
-  $('#countWords')?.onclick=countWords;
-
-  // Grammar
-  $('#newExercise')?.onclick=generateGrammarExercise;
-  $('#checkAnswers')?.onclick=checkGrammarAnswers;
-
-  // SRS
-  $('#startSRS')?.onclick=startSRS;
-  $('#srsFlipCard')?.onclick=e=>{if(e.target.closest('.flip-card')) e.target.closest('.flip-card').classList.toggle('flipped');};
-
-  // Settings
-  $('#setDailyGoal')?.onchange=e=>{state.settings.dailyGoal=parseInt(e.target.value);saveState();};
-  $('#setNewCards')?.onchange=e=>{state.settings.newCardsDay=parseInt(e.target.value);saveState();};
-  $('#setTargetLevel')?.onchange=e=>{state.settings.targetLevel=e.target.value;saveState();};
-  $('#setTheme')?.onchange=e=>{state.settings.theme=e.target.value;applyTheme();};
-  $('#btnExportAll')?.onclick=exportFullBackup;
-  $('#importFile')?.onchange=e=>importBackup(e);
-  $('#btnResetAll')?.onclick=confirmReset;
-
-  // Global Keys
+  $('#app')?.addEventListener('click', handleGlobalClick, true);
+  $('#app')?.addEventListener('change', handleGlobalChange, true);
+  $('#app')?.addEventListener('input', handleGlobalInput, true);
+  
   document.onkeydown = handleGlobalKeys;
+  
+  $('#mobileMenuBtn')?.onclick = () => { state.mobileMenuOpen = !state.mobileMenuOpen; render(); };
+  $('#mobileOverlay')?.onclick = () => { state.mobileMenuOpen = false; render(); };
+  
+  const lexSearch = $('#lexiconSearch');
+  if (lexSearch && !lexSearch._debounced) { lexSearch._debounced = debounce(() => { state.lexiconSearch = lexSearch.value; renderLexiconOnly(); }, 300); lexSearch.oninput = lexSearch._debounced; }
+  const vocabSearch = $('#vocabSearch');
+  if (vocabSearch && !vocabSearch._debounced) { vocabSearch._debounced = debounce(() => { renderVocabLabOnly(); }, 300); vocabSearch.oninput = vocabSearch._debounced; }
+  
+  $('#setDailyGoal')?.onchange = e => { state.settings.dailyGoal = parseInt(e.target.value); saveState(); };
+  $('#setNewCards')?.onchange = e => { state.settings.newCardsDay = parseInt(e.target.value); saveState(); };
+  $('#setTargetLevel')?.onchange = e => { state.settings.targetLevel = e.target.value; saveState(); };
+  $('#setTheme')?.onchange = e => { state.settings.theme = e.target.value; applyTheme(); };
+  $('#importFile')?.onchange = importBackup;
+  
+  lucide.createIcons();
 }
 
-// --- 10. CORE LOGIC FUNCTIONS ---
+function handleGlobalClick(e) {
+  const target = e.target.closest('[data-view], [data-tab], [data-phase], [data-filter], [data-action], [data-check], [data-play], [data-edit], [data-delete], [data-add-word], [data-week], [data-seek], [data-speak], [data-ex-type], [data-grade], [data-dismiss-toast], [data-timer]');
+  if (!target) {
+    // Handle ID-based buttons not covered by data-attrs
+    const id = e.target.id;
+    if (id === 'btnEnterClass') enterClassroom();
+    else if (id === 'prevDay') { if(state.classroomDay>1){state.classroomDay--;renderClassroomOnly();} }
+    else if (id === 'nextDay') { if(state.classroomDay<6){state.classroomDay++;renderClassroomOnly();} }
+    else if (id === 'completeWeek') completeWeek();
+    else if (id === 'logSession') logSession();
+    else if (id === 'timerToggle') toggleTimer();
+    else if (id === 'timerReset') resetTimer();
+    else if (id === 'btnAddWord') openWordModal();
+    else if (id === 'btnExportJson') exportLexicon('json');
+    else if (id === 'btnExportCsv') exportLexicon('csv');
+    else if (id === 'addWordFromList') openWordModal();
+    else if (id === 'loadShadowVideo') loadShadowVideo();
+    else if (id === 'startRecording') startRecording();
+    else if (id === 'playRecording') playRecording();
+    else if (id === 'copyAIPrompt') copyAIPrompt();
+    else if (id === 'countWords') countWords();
+    else if (id === 'newExercise') generateGrammarExercise();
+    else if (id === 'checkAnswers') checkGrammarAnswers();
+    else if (id === 'startSRS') startSRS();
+    else if (id === 'btnExportAll') exportFullBackup();
+    else if (id === 'btnResetAll') confirmReset();
+    else if (id === 'srsFlipCard' || e.target.closest('#srsFlipCard')) { e.target.closest('.flip-card')?.classList.toggle('flipped'); }
+    return;
+  }
+
+  if (target.tagName === 'A' || target.tagName === 'BUTTON') e.preventDefault();
+  const action = target.dataset;
+  
+  if (action.view) { setView(action.view); return; }
+  if (action.tab) { state.activeClassroomTab = action.tab; renderClassroomOnly(); return; }
+  if (action.phase !== undefined) { state.curriculumFilter = parseInt(action.phase) || action.phase; renderCurriculumOnly(); return; }
+  if (action.filter) { state.lexiconFilter = action.filter; renderLexiconOnly(); return; }
+  if (action.action) { openSessionModal(action.action); return; }
+  if (action.timer) { startTimer(parseInt(action.timer)); return; }
+  if (action.dismissToast !== undefined) { state.toasts.splice(parseInt(action.dismissToast), 1); renderToastsOnly(); return; }
+  if (action.check) { saveDailyCheck(action.check, e.target.checked); return; }
+  if (action.play) { if(action.play) new Audio(action.play).play(); return; }
+  if (action.edit) { openWordModal(action.edit); return; }
+  if (action.delete) { if(confirm('Delete permanently?')) deleteWord(action.delete); return; }
+  if (action.addWord) { openWordModal(); setTimeout(()=>{ const hw = $('#wHeadword'); if(hw){ hw.value = action.addWord; fetchWordData(); } }, 100); return; }
+  if (action.week) { openWeekModal(parseInt(action.week)); return; }
+  if (action.seek !== undefined) { seekShadow(parseInt(action.seek)); return; }
+  if (action.speak !== undefined) { speakShadow(parseInt(action.speak)); return; }
+  if (action.exType) { window.grammarExerciseType = action.exType; generateGrammarExercise(); return; }
+  if (action.grade !== undefined) { answerSRS(parseInt(action.grade)); return; }
+}
+
+function handleGlobalChange(e) {
+  if (e.target.matches('[data-check]')) { saveDailyCheck(e.target.dataset.check, e.target.checked); }
+}
+
+function handleGlobalInput(e) {
+  if (e.target.matches('[data-ans]')) { window.grammarUserAnswers[e.target.dataset.ans] = e.target.value; }
+  if (e.target.id === 'wHeadword') state.wordForm.headword = e.target.value;
+  else if (e.target.id === 'wIpa') state.wordForm.ipa = e.target.value;
+  else if (e.target.id === 'wDef') state.wordForm.def = e.target.value;
+  else if (e.target.id === 'wEx') state.wordForm.ex = e.target.value;
+  else if (e.target.id === 'wType') state.wordForm.type = e.target.value;
+  else if (e.target.id === 'wLevel') state.wordForm.level = e.target.value;
+  else if (e.target.id === 'wStatus') state.wordForm.status = e.target.value;
+  else if (e.target.id === 'wTags') state.wordForm.tags = e.target.value;
+  else if (e.target.id === 'wAudioUrl') state.wordForm.audioUrl = e.target.value;
+  if (e.target.id === 'shadowUrl' && e.key === 'Enter') loadShadowVideo();
+}
+
+// ============================================================
+// 10. CORE LOGIC
+// ============================================================
 
 // Navigation
 function setView(view) { state.currentView=view; state.sidebarOpen=false; state.mobileMenuOpen=false; render(); }
 function enterClassroom() { state.classroomDay=getters.todayDay(); state.activeClassroomTab='day'; setView('classroom'); }
-function prevDay() { if(state.classroomDay>1){state.classroomDay--;render();} }
-function nextDay() { if(state.classroomDay<6){state.classroomDay++;render();} }
 function completeWeek() { if(!state.completedWeeks.includes(state.currentWeek)) state.completedWeeks.push(state.currentWeek); if(state.currentWeek<26) state.currentWeek++; state.classroomDay=1; saveState(); toast(`Week ${state.currentWeek-1} completed!`, 'success'); render(); }
 
 // Daily Checks
-function saveDailyCheck(key, val) { const k=`checks_w${state.currentWeek}_d${state.classroomDay}`; if(!state.dailyChecks[k]) state.dailyChecks[k]={srs:false,input:false,output:false,grammar:false,task0:false,task1:false,task2:false}; state.dailyChecks[k][key]=val; saveState(); render(); }
-function logSession() { const k=`checks_w${state.currentWeek}_d${state.classroomDay}`; const c=state.dailyChecks[k]; if(!c||!Object.values(c).every(v=>v)){toast('Complete all 4 tasks first!','warn');return;} const mins=state.settings.dailyGoal; state.totalMinutes+=mins; state.sessionLog.push({date:new Date().toISOString(),week:state.currentWeek,day:state.classroomDay,type:'full',minutes:mins}); state.lastActive=new Date().toISOString(); calculateStreak(); saveState(); toast(`Logged ${mins} min session!`, 'success'); if(state.classroomDay<6) nextDay(); render(); }
+function saveDailyCheck(key, val) { const k=`checks_w${state.currentWeek}_d${state.classroomDay}`; if(!state.dailyChecks[k]) state.dailyChecks[k]={srs:false,input:false,output:false,grammar:false,task0:false,task1:false,task2:false}; state.dailyChecks[k][key]=val; saveState(); renderClassroomOnly(); }
+function logSession() { const k=`checks_w${state.currentWeek}_d${state.classroomDay}`; const c=state.dailyChecks[k]; const coreDone = c && ['srs','input','output','grammar'].every(k=>c[k]); const tasksDone = c && ['task0','task1','task2'].every(k=>c[k]); if(!coreDone && !tasksDone) { toast('Complete core tasks (Sidebar) or Day Lesson tasks!','warn'); return; } const mins=state.settings.dailyGoal; state.totalMinutes+=mins; state.sessionLog.push({date:new Date().toISOString(),week:state.currentWeek,day:state.classroomDay,type:'full',minutes:mins}); state.lastActive=new Date().toISOString(); calculateStreak(); saveState(); toast(`Logged ${mins} min session!`, 'success'); if(state.classroomDay<6) { state.classroomDay++; } renderClassroomOnly(); }
 
 // Timer
 function startTimer(secs) { state.timerSeconds=secs; state.timerMode=secs===1500?'Pomodoro':'Deep Work'; state.timerRunning=true; clearInterval(state.timerInterval); state.timerInterval=setInterval(()=>{if(state.timerSeconds>0)state.timerSeconds--;else{state.timerRunning=false;clearInterval(state.timerInterval);toast('Timer complete!','success');} updateTimerUI();},1000); updateTimerUI(); }
@@ -530,14 +561,13 @@ function startWeekSession(num) { state.currentWeek=num; saveState(); closeWeekMo
 function toggleWeekComplete(num) { const i=state.completedWeeks.indexOf(num); if(i>-1) state.completedWeeks.splice(i,1); else state.completedWeeks.push(num); if(num===state.currentWeek&&i===-1&&state.currentWeek<26) state.currentWeek++; saveState(); closeWeekModal(); render(); }
 
 // Shadowing
-let shadowPlayer = null;
 function loadShadowVideo() { const url=$('#shadowUrl').value; const match=url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([\w-]{11})/); if(!match){toast('Invalid YouTube URL','error');return;} window.shadowVideoId=match[1]; window.shadowSegments=[{time:0,text:"Welcome to this presentation about language learning."},{time:5,text:"Today we will discuss the importance of consistent practice."},{time:12,text:"Shadowing is a powerful technique to improve fluency."},{time:20,text:"You repeat what you hear with a very short delay."},{time:28,text:"This trains your brain to process English in real time."}]; window.shadowCurrentSeg=0; toast('Video loaded! Use keyboard shortcuts.','success'); render(); }
 function seekShadow(i) { window.shadowCurrentSeg=i; const vid=$('#shadow-video'); if(vid) vid.contentWindow.postMessage(JSON.stringify({event:'command',func:'seekTo',args:[window.shadowSegments[i].time,true]}),'*'); render(); }
 function speakShadow(i) { if('speechSynthesis' in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(window.shadowSegments[i].text);u.lang='en-US';u.rate=0.9;speechSynthesis.speak(u);} }
 
 // Output
 let mediaRecorder=null, audioChunks=[], audioBlob=null, audioUrl='';
-async function startRecording() { const btn=$('#startRecording'); if(btn.textContent.includes('Recording')){mediaRecorder.stop();return;} try{const stream=await navigator.mediaDevices.getUserMedia({audio:true}); mediaRecorder=new MediaRecorder(stream); audioChunks=[]; mediaRecorder.ondataavailable=e=>audioChunks.push(e.data); mediaRecorder.onstop=()=>{audioBlob=new Blob(audioChunks,{type:'audio/webm'});audioUrl=URL.createObjectURL(audioBlob);btn.innerHTML=`<i data-lucide="mic" class="w-4 h-4 mr-1"></i> Start 2-min Recording`;btn.classList.remove('bg-red-600');$('#playRecording').disabled=false;$('#saveRecording').classList.remove('hidden');$('#saveRecording').href=audioUrl;$('#saveRecording').download='speaking-practice.webm';stream.getTracks().forEach(t=>t.stop());toast('Recording saved!','success');lucide.createIcons();}; mediaRecorder.start(); btn.innerHTML=`<i data-lucide="mic" class="w-4 h-4 mr-1"></i> Recording (2 min)...`; btn.classList.add('bg-red-600'); setTimeout(()=>{if(mediaRecorder.state==='recording')mediaRecorder.stop();},120000);}catch(e){toast('Mic permission denied','error');} }
+async function startRecording() { const btn=$('#startRecording'); if(btn.textContent.includes('Recording')){ mediaRecorder.stop(); return; } try{ const stream=await navigator.mediaDevices.getUserMedia({audio:true}); mediaRecorder=new MediaRecorder(stream); audioChunks=[]; mediaRecorder.ondataavailable=e=>audioChunks.push(e.data); mediaRecorder.onstop=()=>{ if (state.recordingAudioUrl) URL.revokeObjectURL(state.recordingAudioUrl); audioBlob=new Blob(audioChunks,{type:'audio/webm'}); audioUrl=URL.createObjectURL(audioBlob); state.recordingAudioUrl = audioUrl; btn.innerHTML=`<i data-lucide="mic" class="w-4 h-4 mr-1"></i> Start 2-min Recording`; btn.classList.remove('bg-red-600'); $('#playRecording').disabled=false; $('#saveRecording').classList.remove('hidden'); $('#saveRecording').href=audioUrl; $('#saveRecording').download='speaking-practice.webm'; stream.getTracks().forEach(t=>t.stop()); toast('Recording saved!','success'); lucide.createIcons(); }; mediaRecorder.start(); btn.innerHTML=`<i data-lucide="mic" class="w-4 h-4 mr-1"></i> Recording (2 min)...`; btn.classList.add('bg-red-600'); setTimeout(()=>{if(mediaRecorder.state==='recording')mediaRecorder.stop();},120000); }catch(e){toast('Mic permission denied','error');} }
 function playRecording() { if(audioUrl) new Audio(audioUrl).play(); }
 function copyAIPrompt() { const w=getters.currentWeekData(); const words=w.words.slice(0,10).join(', '); const prompt=`Act as a C2 Cambridge Examiner. Analyze my text below.
 TASK: ${w.output}
@@ -559,10 +589,7 @@ window.grammarExerciseData = null;
 window.grammarUserAnswers = {};
 function generateGrammarExercise() { const w=getters.currentWeekData(); const vocab=w.words.slice(0,10); const t=window.grammarExerciseType; let data={type:t,items:[]}; if(t==='cloze'){data.items=vocab.map((v,i)=>{const sent=`This is a sample sentence using the target word ${v}.`; const p=sent.split(v); return{id:i,word:v,before:p[0],after:p[1]||''};});} else if(t==='transform'){data.items=vocab.slice(0,6).map((v,i)=>{const kw=v.split(' ')[0]; return{id:i,prompt:`Rewrite using "${kw}":`,sentence:`The project was completed by the team successfully.`,key:kw,answer:`The team successfully ${kw} the project.`};});} else if(t==='mcq'){data.items=vocab.slice(0,6).map((v,i)=>{const d=vocab.filter((_,j)=>j!==i).slice(0,3); const o=[v,...d].sort(()=>Math.random()-0.5); return{id:i,question:`Which word fits best?`,options:o,answer:v};});} else if(t==='wordform'){const roots=['mitigate','analyze','sustain','innovate','evaluate','communicate']; data.items=roots.slice(0,6).map((r,i)=>{const f={n:r+'tion',v:r,adj:r+'ive',adv:r+'ively'}; const tgt=['n','v','adj','adv'][Math.floor(Math.random()*4)]; return{id:i,root:r,target:tgt,sentence:`We need a comprehensive ${r}___ of the data.`,answer:f[tgt]};});} window.grammarExerciseData=data; window.grammarUserAnswers={}; renderGrammarExerciseUI(); $('#checkAnswers').disabled=false; }
 function renderGrammarExerciseUI() { const cont=$('#grammarExerciseContainer'); if(!cont||!window.grammarExerciseData) return; const data=window.grammarExerciseData; let html=''; if(data.type==='cloze') html=data.items.map(q=>`<div class="exercise-box"><p class="text-gray-300">${escapeHtml(q.before)}<input type="text" class="fill-input" data-ans="${q.id}" placeholder="..." style="min-width:${Math.max(120,q.word.length*10)}px">${escapeHtml(q.after)}</p><div id="fb-${q.id}" class="text-sm mt-1 hidden"></div></div>`).join(''); else if(data.type==='transform') html=data.items.map(q=>`<div class="exercise-box"><p class="text-gray-300 mb-2">${escapeHtml(q.prompt)}</p><p class="text-gray-500 italic mb-2">"${escapeHtml(q.sentence)}"</p><input type="text" class="fill-input w-full" data-ans="${q.id}" placeholder="Your sentence..."><div id="fb-${q.id}" class="text-sm mt-1 hidden"></div></div>`).join(''); else if(data.type==='mcq') html=data.items.map(q=>`<div class="exercise-box"><p class="text-gray-300 mb-2">${escapeHtml(q.question)}</p><div class="grid gap-2 sm:grid-cols-2">${q.options.map(o=>`<label class="flex items-center gap-2 p-2 rounded-lg border border-gray-700 hover:bg-gray-800 cursor-pointer"><input type="radio" name="mcq_${q.id}" value="${escapeHtml(o)}" data-ans="${q.id}"><span>${escapeHtml(o)}</span></label>`).join('')}</div><div id="fb-${q.id}" class="text-sm mt-1 hidden"></div></div>`).join(''); else if(data.type==='wordform') html=data.items.map(q=>`<div class="exercise-box"><p class="text-gray-300">Root: <strong class="text-cyan-400">${escapeHtml(q.root)}</strong> → Form: <strong>${['Noun','Verb','Adjective','Adverb'][['n','v','adj','adv'].indexOf(q.target)]}</strong></p><p class="text-gray-500 italic mb-2">${escapeHtml(q.sentence.replace('___','____'))}</p><input type="text" class="fill-input w-full" data-ans="${q.id}" placeholder="e.g., mitigation"><div id="fb-${q.id}" class="text-sm mt-1 hidden"></div></div>`).join(''); cont.innerHTML=html; lucide.createIcons(); }
-function checkGrammarAnswers() { if(!window.grammarExerciseData) return; let correct=0; window.grammarExerciseData.items.forEach(q=>{ const ans=window.grammarUserAnswers[q.id]; const fb=$(`#fb-${q.id}`); let ok=false; if(data.type==='transform') ok=normalize(ans)===normalize(q.answer); else ok=ans===q.answer; if(fb){fb.textContent=ok?'✓ Correct':'✗ Answer: '+(q.answer||q.word); fb.className='text-sm mt-1 '+(ok?'text-green-400':'text-red-400'); fb.classList.remove('hidden');} if(ok) correct++; }); toast(`Score: ${correct}/${window.grammarExerciseData.items.length}`, correct===window.grammarExerciseData.items.length?'success':'info'); }
-// Capture grammar inputs
-document.addEventListener('input', e=>{ if(e.target.matches('[data-ans]')) window.grammarUserAnswers[e.target.dataset.ans]=e.target.value; });
-document.addEventListener('change', e=>{ if(e.target.matches('input[type="radio"][data-ans]')) window.grammarUserAnswers[e.target.dataset.ans]=e.target.value; });
+function checkGrammarAnswers() { if(!window.grammarExerciseData) return; let correct=0; const data=window.grammarExerciseData; data.items.forEach(q=>{ const ans=window.grammarUserAnswers[q.id]; const fb=$(`#fb-${q.id}`); let ok=false; if(data.type==='transform') ok=normalize(ans)===normalize(q.answer); else ok=ans===q.answer; if(fb){fb.textContent=ok?'✓ Correct':'✗ Answer: '+(q.answer||q.word); fb.className='text-sm mt-1 '+(ok?'text-green-400':'text-red-400'); fb.classList.remove('hidden');} if(ok) correct++; }); toast(`Score: ${correct}/${data.items.length}`, correct===data.items.length?'success':'info'); }
 function normalize(s){return String(s||'').toLowerCase().replace(/[.,!?]/g,'').trim();}
 
 // Session Modal Timer
@@ -570,23 +597,16 @@ function startSessionTimer() { clearInterval(state.sessionTimerInterval); state.
 function updateSessionTimerUI() { const d=$('#sessionTimerDisplay'); if(d){const m=String(Math.floor(state.sessionTimerSeconds/60)).padStart(2,'0'); const s=String(state.sessionTimerSeconds%60).padStart(2,'0'); d.textContent=`${m}:${s}`;} }
 
 // Settings
-function saveState() { const toSave={currentView:state.currentView,currentWeek:state.currentWeek,streak:state.streak,lastActive:state.lastActive,totalMinutes:state.totalMinutes,words:state.words,sessionLog:state.sessionLog,completedWeeks:state.completedWeeks,dailyChecks:state.dailyChecks,settings:state.settings,classroomDay:state.classroomDay,activeClassroomTab:state.activeClassroomTab,curriculumFilter:state.curriculumFilter,lexiconFilter:state.lexiconFilter,lexiconSearch:state.lexiconSearch}; localStorage.setItem('fluencyLab_v3',JSON.stringify(toSave)); }
 function exportFullBackup() { const data={words:state.words,sessionLog:state.sessionLog,completedWeeks:state.completedWeeks,dailyChecks:state.dailyChecks,settings:state.settings,currentWeek:state.currentWeek,streak:state.streak,totalMinutes:state.totalMinutes,lastActive:state.lastActive}; downloadBlob(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'fluency-lab-backup.json'); toast('Full backup exported','success'); }
 function importBackup(e) { const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{try{const p=JSON.parse(ev.target.result); Object.keys(p).forEach(k=>{if(!['navigation','classroomTabs','toolCategories','checklistItems','lexiconFilters','dayLessons'].includes(k)) state[k]=p[k];}); saveState(); applyTheme(); toast('Backup restored! Reloading...','success'); setTimeout(()=>location.reload(),1000);}catch(err){toast('Invalid file','error');}}; r.readAsText(f); e.target.value=''; }
-function hardReset() { localStorage.removeItem('fluencyLab_v3'); location.reload(); }
-
-// Toast
-function toast(msg, type='info') { state.toasts.push({msg,type}); render(); setTimeout(()=>{state.toasts.shift();render();},5000); }
+function hardReset() { if (state._mediaQueryListener) window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', state._mediaQueryListener); localStorage.removeItem('fluencyLab_v3'); location.reload(); }
 
 // Global Keys
 function handleGlobalKeys(e) { if(state.showWordModal||state.showSessionModal||state.showWeekModal||state.showConfirmReset){if(e.key==='Escape'){closeWordModal();closeSessionModal();closeWeekModal();state.showConfirmReset=false;renderModals();}return;} if(state.srsActive&&['1','2','3','4'].includes(e.key)){const map={1:0,2:3,3:4,4:5};answerSRS(map[e.key]);} if(e.key===' '&&state.activeClassroomTab==='shadowing'){e.preventDefault();const vid=$('#shadow-video');if(vid)vid.paused?vid.play():vid.pause();} if(['ArrowLeft','ArrowRight'].includes(e.key)&&state.activeClassroomTab==='shadowing'){const vid=$('#shadow-video');if(vid)vid.currentTime+=e.key==='ArrowRight'?5:-5;} if(e.key==='s'&&state.activeClassroomTab==='shadowing'){const vid=$('#shadow-video');if(vid)vid.currentTime=Math.max(0,vid.currentTime-3);} }
 
-// Helpers
-function debounce(fn,ms){let t;return(...args)=>{clearTimeout(t);t=setTimeout(()=>fn(...args),ms);};}
-
-// --- 11. INIT ---
-window.app = { state, render, toast, openWordModal, closeWordModal, openSessionModal, closeSessionModal, openWeekModal, closeWeekModal, renderModals, saveState, loadState, applyTheme, startSRS, answerSRS, fetchWordData, saveWord, deleteWord, exportLexicon, startWeekSession, toggleWeekComplete, loadShadowVideo, seekShadow, speakShadow, startRecording, playRecording, copyAIPrompt, countWords, generateGrammarExercise, checkGrammarAnswers, startSessionTimer, exportFullBackup, importBackup, hardReset, saveDailyCheck, logSession, startTimer, toggleTimer, resetTimer, setView, enterClassroom, completeWeek, handleGlobalKeys };
-
+// ============================================================
+// 11. INIT
+// ============================================================
 loadState();
 render();
 console.log('Fluency Lab v3 Loaded. State:', state);
